@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050a2e">
+<meta name="robots" content="noindex">
+<title>The Living Hive · One Band Works</title>
+<meta name="description" content="Enter the One Band Works Living Hive: cross the golden bridge, step through the portal, and explore six chambers.">
+<link rel="icon" href="favicon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --night: #050a2e; --royal: #1c3fb8; --royal2: #0f2370; --gold: #f2c25b; --gold2: #ffe39a; --purple: #9b5cff; --violet: #6b2bd9;
+  --text: #f3f1ff; --muted: #b9bde6; --glass: rgba(8, 14, 52, .72); --line: rgba(242, 194, 91, .35);
+  --display: 'Cinzel', Georgia, serif; --ui: 'Montserrat', system-ui, -apple-system, sans-serif;
+  --hex: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  --safe-b: env(safe-area-inset-bottom, 0px); --safe-t: env(safe-area-inset-top, 0px);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; background: var(--night); color: var(--text); font-family: var(--ui); overflow: hidden; overscroll-behavior: none; }
+body { position: fixed; inset: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* stage: CSS gradient is the fallback if canvas can't draw */
+#stage { position: absolute; inset: 0; background: linear-gradient(180deg, #050a2e 0%, #1c3fb8 45%, #7a4bc4 62%, #0e1f6b 70%, #050a2e 100%); }
+#stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#atriumCv { opacity: 0; transition: opacity .7s; }
+body.in-atrium #atriumCv { opacity: 1; }
+#flash { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: radial-gradient(circle at 50% 50%, #fff 0%, #e4ccff 25%, #9b5cff 55%, rgba(107, 43, 217, 0) 80%); transition: opacity .5s; z-index: 4; }
+#flash.on { opacity: 1; transition: opacity .35s; }
+
+/* HUD */
+.top { position: absolute; top: 0; left: 0; right: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: calc(10px + var(--safe-t)) 14px 10px; background: linear-gradient(180deg, rgba(5, 10, 46, .85), rgba(5, 10, 46, 0)); pointer-events: none; }
+.top > * { pointer-events: auto; }
+.brand { display: flex; align-items: center; gap: 10px; background: none; border: 0; padding: 4px; text-align: left; }
+.brand img { width: 38px; height: 38px; border-radius: 50%; box-shadow: 0 0 14px rgba(242, 194, 91, .5); }
+.brand b { display: block; font-family: var(--display); letter-spacing: .12em; font-size: .92rem; }
+.brand i { display: block; font-style: italic; font-size: .7rem; color: var(--gold); }
+.tbtns { display: flex; gap: 8px; }
+.pill { min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--glass); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); font-weight: 600; font-size: .82rem; letter-spacing: .04em; display: inline-flex; align-items: center; gap: 8px; }
+.pill:active { transform: scale(.97); }
+.pill.gold { background: linear-gradient(180deg, var(--gold2), var(--gold)); color: #2a1a00; border-color: transparent; box-shadow: 0 6px 24px rgba(242, 194, 91, .35); }
+
+/* bottom dock: where you are + next step */
+.dock { position: absolute; left: 0; right: 0; bottom: 0; z-index: 10; padding: 10px 14px calc(14px + var(--safe-b)); display: grid; gap: 10px; background: linear-gradient(0deg, rgba(5, 10, 46, .9), rgba(5, 10, 46, 0)); pointer-events: none; }
+.dock > * { pointer-events: auto; }
+.caption { justify-self: center; max-width: 620px; text-align: center; font-size: .95rem; line-height: 1.45; padding: 10px 16px; border-radius: 14px; background: var(--glass); border: 1px solid var(--line); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); opacity: 0; transform: translateY(8px); transition: opacity .4s, transform .4s; }
+.caption.show { opacity: 1; transform: none; }
+.caption b { color: var(--gold); font-family: var(--display); letter-spacing: .06em; }
+.steps { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+.where { font-size: .72rem; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); text-align: center; }
+.where b { color: var(--gold); font-weight: 600; }
+
+/* hotspots in the 3D world */
+.hot { position: absolute; z-index: 6; transform: translate(-50%, -50%); min-width: 44px; min-height: 44px; border: 0; background: none; padding: 0; display: none; }
+.hot.on { display: block; }
+.hot .ring { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px; border-radius: 50%; border: 2px solid var(--gold2); box-shadow: 0 0 18px var(--gold); animation: ping 1.6s infinite; }
+.hot .core { position: absolute; left: 50%; top: 50%; width: 16px; height: 16px; margin: -8px; border-radius: 50%; background: var(--gold2); box-shadow: 0 0 14px var(--gold); }
+.hot .lbl { position: absolute; left: 50%; top: 34px; transform: translateX(-50%); white-space: nowrap; font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 6px 10px; border-radius: 99px; background: var(--glass); border: 1px solid var(--line); }
+@keyframes ping { 0% { transform: scale(.6); opacity: 1; } 100% { transform: scale(1.6); opacity: 0; } }
+
+/* welcome card */
+.welcome { position: absolute; z-index: 9; left: 50%; top: calc(78px + var(--safe-t)); transform: translateX(-50%); width: min(560px, 100% - 24px); text-align: center; transition: opacity .6s, transform .6s; padding: 18px 14px 20px; border-radius: 22px; background: radial-gradient(120% 100% at 50% 40%, rgba(5, 10, 46, .78), rgba(5, 10, 46, .35) 70%, rgba(5, 10, 46, 0)); }
+.welcome.hide { opacity: 0; transform: translate(-50%, -16px); pointer-events: none; }
+@media (min-aspect-ratio: 1/1) { .welcome { top: 50%; left: max(24px, 5vw); width: min(480px, 42vw); transform: translateY(-50%); text-align: left; background: radial-gradient(120% 100% at 30% 50%, rgba(5, 10, 46, .7), rgba(5, 10, 46, 0) 75%); } .welcome .row { justify-content: flex-start; } .welcome p { margin-left: 0; } .welcome.hide { transform: translateY(-56%); } }
+@media (max-height: 760px) and (max-aspect-ratio: 1/1) { .welcome p { display: none; } }
+.welcome .k { font-size: .72rem; letter-spacing: .28em; text-transform: uppercase; color: var(--gold); font-weight: 700; }
+.welcome h1 { font-family: var(--display); font-size: clamp(2rem, 8vw, 3.6rem); line-height: 1.02; margin: 10px 0 8px; letter-spacing: .04em; text-shadow: 0 4px 30px rgba(0, 0, 0, .6), 0 0 40px rgba(155, 92, 255, .4); }
+.welcome h1 span { display: block; font-size: .5em; color: var(--gold2); letter-spacing: .18em; margin-top: 6px; }
+.welcome p { color: #e2e4ff; margin: 0 auto 18px; font-size: .95rem; max-width: 420px; line-height: 1.5; text-shadow: 0 2px 10px rgba(0, 0, 0, .8); }
+.welcome .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.welcome .pill { min-height: 52px; padding: 0 22px; font-size: .92rem; }
+
+/* atrium doors */
+.atrium { position: absolute; inset: 0; z-index: 7; display: none; align-items: center; justify-content: center; padding: calc(72px + var(--safe-t)) 14px calc(110px + var(--safe-b)); }
+body.in-atrium .atrium { display: flex; }
+body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
+.atrium .emb { width: clamp(64px, 16vw, 96px); height: auto; border-radius: 50%; filter: drop-shadow(0 0 22px rgba(242, 194, 91, .8)); animation: floaty 4s ease-in-out infinite; margin-bottom: 6px; }
+@keyframes floaty { 50% { transform: translateY(-6px); } }
+.atrium .wrap { width: min(820px, 100%); text-align: center; }
+.atrium h2 { font-family: var(--display); letter-spacing: .1em; margin: 0 0 4px; font-size: clamp(1.3rem, 4.5vw, 2rem); text-shadow: 0 2px 16px rgba(0, 0, 0, .7); }
+.atrium .sub { color: var(--muted); margin: 0 0 18px; font-size: .9rem; }
+.doors { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(10px, 3vw, 26px) clamp(8px, 2.6vw, 22px); }
+.door { position: relative; aspect-ratio: .866; border: 0; padding: 0; background: none; filter: drop-shadow(0 8px 20px rgba(0, 0, 0, .55)); transition: transform .3s, filter .3s; animation: rise .6s backwards; }
+.door:nth-child(2) { animation-delay: .08s; } .door:nth-child(3) { animation-delay: .16s; } .door:nth-child(4) { animation-delay: .24s; } .door:nth-child(5) { animation-delay: .32s; } .door:nth-child(6) { animation-delay: .4s; }
+@keyframes rise { from { opacity: 0; transform: translateY(16px); } }
+.door .rim, .door .in { position: absolute; clip-path: var(--hex); }
+.door .rim { inset: 0; background: linear-gradient(160deg, var(--gold2), #b9832a 50%, var(--gold)); }
+.door .in { inset: 3px; background: radial-gradient(circle at 50% 30%, var(--c, #2a55e0), #0b1a5c 75%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 14% 10%; }
+.door svg { width: clamp(24px, 6vw, 40px); height: auto; stroke: var(--gold2); fill: none; stroke-width: 1.6; filter: drop-shadow(0 0 6px rgba(242, 194, 91, .7)); }
+.door b { font-family: var(--display); font-size: clamp(.68rem, 2.6vw, 1rem); letter-spacing: .08em; }
+.door small { font-size: clamp(.56rem, 2vw, .74rem); color: #d6daff; line-height: 1.2; }
+.door:hover, .door:focus-visible, .door.glow { transform: translateY(-6px) scale(1.04); filter: drop-shadow(0 0 22px rgba(242, 194, 91, .9)); outline: none; }
+.atrium .talk { margin-top: 18px; }
+
+/* chamber panel */
+.chamber { position: absolute; z-index: 12; inset: 0; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
+.chamber .sheet { pointer-events: auto; width: min(760px, 100%); max-height: calc(100% - 70px - var(--safe-t)); overflow-y: auto; -webkit-overflow-scrolling: touch; background: linear-gradient(180deg, #111c5c, #060b2e); border: 1px solid var(--line); border-bottom: 0; border-radius: 22px 22px 0 0; padding: 0 0 calc(20px + var(--safe-b)); transform: translateY(105%); transition: transform .5s cubic-bezier(.2, .8, .2, 1); box-shadow: 0 -20px 60px rgba(0, 0, 0, .6); }
+.chamber.open .sheet { transform: none; }
+.chamber .head { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 14px 16px; background: rgba(12, 20, 70, .96); border-bottom: 1px solid var(--line); }
+.chamber .head .t { font-size: .7rem; letter-spacing: .22em; text-transform: uppercase; color: var(--gold); font-weight: 700; }
+.chamber .head .nav { display: flex; gap: 6px; }
+.chamber .head .pill { min-height: 40px; padding: 0 12px; }
+.chamber .body { padding: 20px 18px 6px; }
+.chamber h3 { font-family: var(--display); font-size: clamp(1.6rem, 6vw, 2.3rem); margin: 0 0 6px; letter-spacing: .04em; }
+.chamber .lead { color: var(--muted); line-height: 1.6; margin: 0 0 18px; }
+.cards { display: grid; gap: 10px; }
+.card { border: 1px solid rgba(242, 194, 91, .22); background: rgba(255, 255, 255, .03); border-radius: 14px; padding: 14px; }
+.card .r1 { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.card b { font-size: 1rem; }
+.card .pr { color: var(--gold); font-size: .82rem; font-weight: 600; text-align: right; }
+.card p { margin: 6px 0 10px; color: var(--muted); font-size: .9rem; line-height: 1.5; }
+.add { min-height: 40px; border-radius: 99px; border: 1px solid var(--line); background: none; padding: 0 14px; font-size: .8rem; font-weight: 600; color: var(--gold2); }
+.add[aria-pressed="true"] { background: var(--gold); color: #2a1a00; border-color: transparent; }
+.chamber textarea, .chamber input { width: 100%; background: rgba(0, 0, 0, .3); border: 1px solid var(--line); color: var(--text); border-radius: 12px; padding: 12px; font: inherit; font-size: 16px; }
+.chamber textarea { min-height: 150px; line-height: 1.5; resize: vertical; }
+.chamber label { display: block; font-size: .8rem; font-weight: 600; margin: 12px 0 6px; color: var(--gold2); }
+.toast { min-height: 1.4em; color: var(--gold2); font-size: .85rem; margin-top: 8px; }
+
+/* menu (plain 2D navigation; works even without the scene) */
+.menu { position: absolute; z-index: 20; inset: 0; background: rgba(3, 6, 28, .7); display: none; }
+.menu.open { display: block; }
+.menu nav { position: absolute; right: 0; top: 0; bottom: 0; width: min(340px, 88%); background: linear-gradient(180deg, #111c5c, #070c34); border-left: 1px solid var(--line); padding: calc(16px + var(--safe-t)) 16px calc(16px + var(--safe-b)); overflow-y: auto; }
+.menu h4 { margin: 16px 0 6px; font-size: .68rem; letter-spacing: .22em; text-transform: uppercase; color: var(--gold); }
+.menu a { display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 0 12px; border-radius: 12px; color: var(--text); text-decoration: none; font-weight: 600; }
+.menu a:hover, .menu a:focus-visible, .menu a.now { background: rgba(242, 194, 91, .12); outline: none; }
+.menu a i { width: 12px; height: 13px; clip-path: var(--hex); background: var(--gold); flex: none; }
+
+@media (max-width: 520px) {
+  .brand b { font-size: .8rem; } .brand i { font-size: .64rem; }
+  .pill { padding: 0 13px; font-size: .78rem; }
+  #tourBtn span { display: none; }
+  .caption { font-size: .88rem; }
+}
+@media (prefers-reduced-motion: reduce) { .hot .ring { animation: none; } .door { animation: none; } }
+</style>
+</head>
+<body>
+<div id="stage" aria-hidden="true">
+  <canvas id="worldCv"></canvas>
+  <canvas id="atriumCv"></canvas>
+  <div id="flash"></div>
+</div>
+
+<header class="top">
+  <button class="brand" data-go="aerial" aria-label="One Band Works, back to the aerial view"><img src="icon.png" alt=""><span><b>ONE BAND WORKS</b><i>Systems that flow to grow.</i></span></button>
+  <div class="tbtns">
+    <button class="pill" id="tourBtn" aria-label="Guided tour">▶ <span>Tour</span></button>
+    <button class="pill" id="menuBtn" aria-haspopup="true" aria-controls="menu">☰ Menu</button>
+  </div>
+</header>
+
+<button class="hot" id="hotBridge" data-go="bridge"><span class="ring"></span><span class="core"></span><span class="lbl">Tap: cross the bridge</span></button>
+<button class="hot" id="hotGate" data-go="entrance"><span class="ring"></span><span class="core"></span><span class="lbl">Tap: walk to the gate</span></button>
+<button class="hot" id="hotPortal" data-go="atrium"><span class="ring"></span><span class="core"></span><span class="lbl">Tap: enter the hive</span></button>
+
+<section class="welcome" id="welcome">
+  <div class="k">Welcome to the Living Hive</div>
+  <h1>ONE BAND WORKS<span>WHERE IDEAS TAKE FLIGHT</span></h1>
+  <p>Cross the golden bridge, step through the portal, and explore the chambers where people, systems, and technology work as one band.</p>
+  <div class="row">
+    <button class="pill gold" id="beginBtn">▶ Begin Cinematic Journey</button>
+    <button class="pill" id="freeBtn">Explore Freely</button>
+  </div>
+</section>
+
+<section class="atrium" id="atrium" aria-label="The atrium">
+  <div class="wrap">
+    <img class="emb" src="icon.png" alt=""><h2>THE ATRIUM</h2>
+    <p class="sub">Six chambers. One band. Tap a chamber to step inside.</p>
+    <div class="doors" id="doors"></div>
+    <button class="pill gold talk" data-go="contact">✉ Talk to the Hive</button>
+  </div>
+</section>
+
+<div class="dock">
+  <div class="caption" id="caption" role="status" aria-live="polite"></div>
+  <div class="where" id="where"></div>
+  <div class="steps" id="steps"></div>
+</div>
+
+<section class="chamber" id="chamber" aria-modal="true" role="dialog" aria-labelledby="chTitle">
+  <div class="sheet" id="sheet">
+    <div class="head"><span class="t" id="chTag">Chamber</span><span class="nav"><button class="pill" id="chPrev" aria-label="Previous chamber">‹</button><button class="pill" id="chNext" aria-label="Next chamber">›</button><button class="pill" data-go="atrium">Atrium</button></span></div>
+    <div class="body" id="chBody"></div>
+  </div>
+</section>
+
+<div class="menu" id="menu">
+  <nav aria-label="Hive map">
+    <button class="pill" id="menuClose" style="float:right">✕ Close</button>
+    <h4>The journey</h4>
+    <a href="#/aerial" data-r="aerial"><i></i>Aerial view</a>
+    <a href="#/bridge" data-r="bridge"><i></i>Golden bridge</a>
+    <a href="#/entrance" data-r="entrance"><i></i>Hive entrance</a>
+    <a href="#/atrium" data-r="atrium"><i></i>The atrium</a>
+    <h4>Chambers</h4>
+    <div id="menuChambers"></div>
+    <h4>Talk</h4>
+    <a href="#/contact" data-r="contact"><i></i>Talk to the Hive</a>
+  </nav>
+</div>
+
+<script src="data.js"></script>
+<script>
+(function () {
+  'use strict';
+  var D = window.OBW || { cats: {}, email: '' }, C = D.cats;
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  /* ---------- chambers ---------- */
+  var ICON = {
+    people: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><circle cx="5.5" cy="9.5" r="2.3"/><circle cx="18.5" cy="9.5" r="2.3"/><path d="M6 20c0-3.6 2.7-6 6-6s6 2.4 6 6M1.5 19c0-2.6 1.6-4.5 4-4.8M22.5 19c0-2.6-1.6-4.5-4-4.8"/></svg>',
+    systems: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>',
+    tech: '<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1.5"/><rect x="9.5" y="9.5" width="5" height="5"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>',
+    opp: '<svg viewBox="0 0 24 24"><path d="M3 21h18M5 21v-5M10 21v-8M15 21v-6M20 21V9M4 13l6-5 4 3 7-7M16 4h5v5"/></svg>',
+    solutions: '<svg viewBox="0 0 24 24"><path d="M12 2 21 7v10l-9 5-9-5V7z"/><path d="m8 12 3 3 5-6"/></svg>',
+    resources: '<svg viewBox="0 0 24 24"><path d="M4 4h6a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4zM20 4h-6a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h7z"/></svg>',
+    contact: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>'
+  };
+  var CH = [
+    { id: 'people', name: 'People', tag: 'Empower individuals & teams', c: '#2f5cf0', cat: 'people' },
+    { id: 'systems', name: 'Systems', tag: 'Build streamlined processes', c: '#3a49d8', cat: 'systems' },
+    { id: 'technology', name: 'Technology', tag: 'Innovative tools for real growth', c: '#2b6fe0', cat: 'tech' },
+    { id: 'opportunity', name: 'Opportunity', tag: 'Create sustainable impact', c: '#6b3be0', cat: 'opp' },
+    { id: 'solutions', name: 'Solutions', tag: 'Ready-made packages', c: '#7d2fd0' },
+    { id: 'resources', name: 'Resources', tag: 'Free tools & guides', c: '#4040c8' }
+  ];
+  var picked = [];
+
+  var doors = $('doors'), menuCh = $('menuChambers');
+  CH.forEach(function (ch) {
+    doors.insertAdjacentHTML('beforeend', '<button class="door" data-go="chamber/' + ch.id + '" style="--c:' + ch.c + '" aria-label="' + ch.name + ' chamber"><span class="rim"></span><span class="in">' + ICON[ch.cat || ch.id] + '<b>' + ch.name.toUpperCase() + '</b><small>' + ch.tag + '</small></span></button>');
+    menuCh.insertAdjacentHTML('beforeend', '<a href="#/chamber/' + ch.id + '" data-r="chamber/' + ch.id + '"><i></i>' + ch.name + '</a>');
+  });
+
+  function chamberHTML(ch) {
+    var h = '<h3>' + esc(ch.name) + '</h3>';
+    if (ch.cat && C[ch.cat]) {
+      var cat = C[ch.cat];
+      h += '<p class="lead">' + esc(cat.blurb) + '</p><div class="cards">';
+      cat.items.forEach(function (it, i) {
+        var key = ch.cat + ':' + i, on = picked.indexOf(key) > -1;
+        h += '<div class="card"><div class="r1"><b>' + esc(it.n) + '</b><span class="pr">' + esc(it.p) + '</span></div><p>' + esc(it.d) + '</p><button class="add" data-pick="' + key + '" aria-pressed="' + on + '">' + (on ? '✓ In my request' : '+ Add to my request') + '</button></div>';
+      });
+      h += '</div>';
+    } else if (ch.id === 'solutions') {
+      h += '<p class="lead">Pre-built bundles that pull the right chambers together, so you get one plan and one point of contact.</p><div class="cards">' +
+        '<div class="card"><div class="r1"><b>Launch Package</b><span class="pr">$2,000 to $3,000</span></div><p>Brand core, logo and icon kit, and a 3-page website for a business that needs to look ready on day one.</p><button class="add" data-pick="opp:0" aria-pressed="' + (picked.indexOf('opp:0') > -1) + '">' + (picked.indexOf('opp:0') > -1 ? '✓ In my request' : '+ Add to my request') + '</button></div>' +
+        '<div class="card"><div class="r1"><b>Smooth Shop Package</b><span class="pr">$1,500 to $2,500</span></div><p>Process checkup, a custom rework tracker, and 3 months of maintenance for a running business.</p><button class="add" data-pick="opp:1" aria-pressed="' + (picked.indexOf('opp:1') > -1) + '">' + (picked.indexOf('opp:1') > -1 ? '✓ In my request' : '+ Add to my request') + '</button></div>' +
+        '<div class="card"><b>How we work</b><p>50% deposit to start, balance on delivery. Two rounds of revisions on creative work. Travel included within 25 miles of Jonesboro, GA.</p></div></div>';
+    } else if (ch.id === 'resources') {
+      h += '<p class="lead">Tools from the hive that you can learn from, free.</p><div class="cards">' +
+        '<div class="card"><b>First-time-right tracker</b><p>See how a simple rework log shows where time and money leak out of a process.</p></div>' +
+        '<div class="card"><b>The O: beginner AI course</b><p>A friendly, phone-first course on using AI for everyday work.</p></div>' +
+        '<div class="card"><b>Process checkup checklist</b><p>Coming soon: the walkthrough checklist we use on day one.</p></div>' +
+        '<div class="card"><b>O.N.E. + B.A.N.D.</b><p>Organize. Nurture. Expand. Build. Align. Nurture. Develop. The way every job moves through the hive.</p></div></div>';
+    } else if (ch.id === 'contact') {
+      h += '<p class="lead">Tell the hive what you need. Copy the note and send it to <b>' + esc(D.email) + '</b>.</p>' +
+        '<label for="cName">Your name</label><input id="cName" autocomplete="name">' +
+        '<label for="cNote">Your note</label><textarea id="cNote"></textarea>' +
+        '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><button class="pill gold" id="cCopy">Copy note</button><button class="pill" id="cMail">Copy email</button></div><div class="toast" id="cToast" role="status"></div>';
+    }
+    return h;
+  }
+  function noteText(name) {
+    var lines = picked.map(function (k) { var a = k.split(':'), it = C[a[0]] && C[a[0]].items[+a[1]]; return it ? '• ' + it.n + ' (' + it.p + ')' : ''; }).filter(Boolean);
+    return 'Hi One Band Works,\n\n' + (lines.length ? 'I would like to talk about:\n' + lines.join('\n') + '\n\n' : '') + 'A little about my business:\n\n' + (name ? 'Thanks,\n' + name : 'Thanks!');
+  }
+  function copy(text, msg) {
+    var t = $('cToast');
+    function fb() { var ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, text.length); try { document.execCommand('copy'); t.textContent = msg; } catch (e) { t.textContent = 'Press and hold to copy'; } ta.remove(); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { t.textContent = msg; }, fb); else fb();
+  }
+
+  /* ---------- world painting (2.5D scene) ---------- */
+  var W = 2400, H = 1500, HX = 1350, PORTAL_Y = 1040;
+  var worldCv = $('worldCv'), wctx = worldCv.getContext('2d');
+  var atrCv = $('atriumCv'), actx = atrCv.getContext('2d');
+  var layer = document.createElement('canvas'), lctx = layer.getContext('2d');
+  var LQ = 1, icon = new Image(), iconReady = false;
+  var vw = 0, vh = 0, dpr = 1;
+
+  function rng(seed) { return function () { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }; }
+  function hexPath(c, x, y, r) { c.beginPath(); for (var k = 0; k < 6; k++) { var a = Math.PI / 180 * (60 * k - 90); var px = x + r * Math.cos(a), py = y + r * Math.sin(a); if (k) c.lineTo(px, py); else c.moveTo(px, py); } c.closePath(); }
+  function ridge(c, base, amp, seed, col, rim) {
+    var r = rng(seed), ph = [r() * 6, r() * 6, r() * 6];
+    c.beginPath(); c.moveTo(0, H);
+    var pts = [];
+    for (var x = 0; x <= W; x += 20) { var y = base - amp * (0.5 * Math.sin(x / 260 + ph[0]) + 0.3 * Math.sin(x / 110 + ph[1]) + 0.2 * Math.sin(x / 47 + ph[2])) - amp * .6; pts.push([x, y]); c.lineTo(x, y); }
+    c.lineTo(W, H); c.closePath(); c.fillStyle = col; c.fill();
+    if (rim) { c.beginPath(); pts.forEach(function (p, i) { if (i) c.lineTo(p[0], p[1]); else c.moveTo(p[0], p[1]); }); c.strokeStyle = rim; c.lineWidth = 2; c.stroke(); }
+  }
+  var domeCells = [];
+  function paintWorld() {
+    layer.width = W * LQ; layer.height = H * LQ;
+    var c = lctx; c.setTransform(LQ, 0, 0, LQ, 0, 0);
+    /* sky */
+    var g = c.createLinearGradient(0, 0, 0, 1060);
+    g.addColorStop(0, '#040828'); g.addColorStop(.35, '#13277f'); g.addColorStop(.62, '#3b3fb0'); g.addColorStop(.8, '#8a56c8'); g.addColorStop(.93, '#e7a36a'); g.addColorStop(1, '#f6cf7a');
+    c.fillStyle = g; c.fillRect(0, 0, W, 1060);
+    var sun = c.createRadialGradient(HX, 860, 20, HX, 860, 700); sun.addColorStop(0, 'rgba(255,230,160,.85)'); sun.addColorStop(.3, 'rgba(255,190,120,.35)'); sun.addColorStop(1, 'rgba(255,190,120,0)');
+    c.fillStyle = sun; c.fillRect(0, 0, W, 1060);
+    var r = rng(7); c.fillStyle = '#fff';
+    for (var i = 0; i < 260; i++) { var sx = r() * W, sy = r() * 560, sr = r() * 1.6 + .3; c.globalAlpha = .3 + r() * .7 * (1 - sy / 600); c.beginPath(); c.arc(sx, sy, sr, 0, 6.3); c.fill(); }
+    c.globalAlpha = 1;
+    /* mountains */
+    ridge(c, 880, 160, 11, 'rgba(70,72,170,.75)', 'rgba(255,200,140,.25)');
+    ridge(c, 960, 130, 23, '#2a2f8f', 'rgba(255,190,120,.35)');
+    ridge(c, 1030, 90, 37, '#1a1f6b', 'rgba(242,194,91,.4)');
+    /* lake */
+    var lk = c.createLinearGradient(0, 1040, 0, H); lk.addColorStop(0, '#3b3a9e'); lk.addColorStop(.25, '#14267a'); lk.addColorStop(1, '#050a2e');
+    c.fillStyle = lk; c.fillRect(0, 1040, W, H - 1040);
+    var refl = c.createRadialGradient(HX, 1060, 10, HX, 1060, 520); refl.addColorStop(0, 'rgba(255,214,140,.55)'); refl.addColorStop(1, 'rgba(255,214,140,0)');
+    c.save(); c.scale(1, .35); c.fillStyle = refl; c.fillRect(0, 1040 / .35, W, 900); c.restore();
+    /* cliffs + waterfall beds */
+    function cliff(pts, fall) {
+      c.beginPath(); pts.forEach(function (p, i) { if (i) c.lineTo(p[0], p[1]); else c.moveTo(p[0], p[1]); }); c.closePath();
+      var cg = c.createLinearGradient(0, 400, 0, 1100); cg.addColorStop(0, '#2a2f86'); cg.addColorStop(1, '#0a1046'); c.fillStyle = cg; c.fill();
+      c.strokeStyle = 'rgba(242,194,91,.45)'; c.lineWidth = 3; c.stroke();
+      fall.forEach(function (f) { var fg = c.createLinearGradient(0, f[1], 0, 1060); fg.addColorStop(0, 'rgba(190,225,255,.9)'); fg.addColorStop(1, 'rgba(120,170,255,.55)'); c.fillStyle = fg; c.fillRect(f[0], f[1], f[2], 1060 - f[1]); c.fillStyle = 'rgba(230,245,255,.6)'; c.beginPath(); c.ellipse(f[0] + f[2] / 2, 1062, f[2] * 1.4, 16, 0, 0, 6.3); c.fill(); });
+    }
+    cliff([[0, 1100], [0, 420], [120, 380], [260, 440], [360, 470], [470, 450], [600, 520], [700, 640], [760, 1100]], [[350, 480, 46], [520, 470, 30]]);
+    cliff([[2400, 1100], [2400, 470], [2290, 430], [2180, 500], [2060, 520], [1960, 600], [1900, 720], [1880, 1100]], [[2120, 510, 40], [2240, 470, 26]]);
+    /* island */
+    c.fillStyle = '#0b1250'; c.beginPath(); c.ellipse(HX, 1050, 560, 70, 0, 0, 6.3); c.fill();
+    c.strokeStyle = 'rgba(242,194,91,.7)'; c.lineWidth = 4; c.beginPath(); c.ellipse(HX, 1046, 560, 66, 0, Math.PI, 0); c.stroke();
+    /* halo behind dome */
+    var halo = c.createRadialGradient(HX, 760, 100, HX, 760, 560); halo.addColorStop(0, 'rgba(155,92,255,.45)'); halo.addColorStop(1, 'rgba(155,92,255,0)'); c.fillStyle = halo; c.fillRect(HX - 600, 200, 1200, 900);
+    /* hive dome of hex cells */
+    var R = 44, w = Math.sqrt(3) * R, cy = 760, rx = 440, ry = 340, rr = rng(99); domeCells = [];
+    for (var row = -9; row <= 9; row++) {
+      var y = cy + row * R * 1.5; if (y > 1008) continue;
+      for (var col = -8; col <= 8; col++) {
+        var x = HX + col * w + (row & 1 ? w / 2 : 0);
+        var dx = (x - HX) / rx, dy = (y - cy) / ry; if (dx * dx + dy * dy > 1) continue;
+        domeCells.push({ x: x, y: y, lit: rr() < .16, tw: rr() * 6 });
+        hexPath(c, x, y, R - 2);
+        var shade = 1 - Math.min(1, Math.abs(dx) * .6 + (dy + 1) * .12);
+        var lit = domeCells[domeCells.length - 1].lit, cg2 = c.createLinearGradient(x, y - R, x, y + R);
+        if (lit) { cg2.addColorStop(0, '#ffe08a'); cg2.addColorStop(1, '#d98b12'); } else { cg2.addColorStop(0, 'rgba(70,120,255,' + (.75 + shade * .25) + ')'); cg2.addColorStop(1, 'rgba(12,30,110,1)'); }
+        c.fillStyle = cg2; c.fill();
+        c.strokeStyle = '#e8b54d'; c.lineWidth = 4.5; c.stroke();
+        hexPath(c, x, y - 4, R - 12); c.strokeStyle = 'rgba(255,255,255,.12)'; c.lineWidth = 2; c.stroke();
+      }
+    }
+    /* crown + emblem */
+    c.fillStyle = '#e8b54d';
+    [[-60, 0], [0, -30], [60, 0]].forEach(function (s) { c.beginPath(); c.moveTo(HX + s[0] - 22, 440 + s[1]); c.lineTo(HX + s[0], 360 + s[1]); c.lineTo(HX + s[0] + 22, 440 + s[1]); c.closePath(); c.fill(); });
+    c.beginPath(); c.arc(HX, 470, 86, 0, 6.3); c.fillStyle = '#0b1a5c'; c.fill(); c.lineWidth = 8; c.strokeStyle = '#f2c25b'; c.stroke();
+    if (iconReady) c.drawImage(icon, HX - 74, 396, 148, 148);
+    /* portal arch */
+    var pw = 210, ph = 250, py = PORTAL_Y;
+    c.save(); c.beginPath(); c.moveTo(HX - pw / 2, py); c.lineTo(HX - pw / 2, py - ph + pw / 2); c.arc(HX, py - ph + pw / 2, pw / 2, Math.PI, 0); c.lineTo(HX + pw / 2, py); c.closePath();
+    var pg = c.createRadialGradient(HX, py - 110, 10, HX, py - 110, 200); pg.addColorStop(0, '#ffffff'); pg.addColorStop(.25, '#dcc2ff'); pg.addColorStop(.6, '#8e4dff'); pg.addColorStop(1, '#3a157e');
+    c.fillStyle = pg; c.fill(); c.lineWidth = 16; c.strokeStyle = '#f2c25b'; c.stroke(); c.lineWidth = 4; c.strokeStyle = '#fff1c2'; c.stroke(); c.restore();
+    /* bridge */
+    var by0 = PORTAL_Y + 2, bt = 100, bb = 360;
+    c.beginPath(); c.moveTo(HX - bt, by0); c.lineTo(HX + bt, by0); c.lineTo(HX + bb, H); c.lineTo(HX - bb, H); c.closePath();
+    var bg = c.createLinearGradient(0, by0, 0, H); bg.addColorStop(0, '#f6d27a'); bg.addColorStop(1, '#b07a1f'); c.fillStyle = bg; c.fill();
+    c.strokeStyle = 'rgba(90,55,5,.45)'; c.lineWidth = 2;
+    for (var t = 0; t < 1; t += .04) { var yy = by0 + (H - by0) * t * t, hw = bt + (bb - bt) * t * t; c.beginPath(); c.moveTo(HX - hw, yy); c.lineTo(HX + hw, yy); c.stroke(); }
+    [-1, 1].forEach(function (s) {
+      c.beginPath(); c.moveTo(HX + s * bt, by0 - 26); c.lineTo(HX + s * bb, H - 80); c.lineWidth = 6; c.strokeStyle = '#ffe39a'; c.stroke();
+      for (var t2 = 0; t2 <= 1; t2 += .2) { var e = t2 * t2, px = HX + s * (bt + (bb - bt) * e), pyy = by0 + (H - by0) * e; var hgt = 26 + 54 * e; c.fillStyle = '#c48d2a'; c.fillRect(px - 3 - 3 * e, pyy - hgt, 6 + 6 * e, hgt); }
+    });
+  }
+  icon.onload = function () { iconReady = true; paintWorld(); paintAtriumBase(); };
+  icon.src = 'icon.png';
+
+  /* atrium: interior galleries around a column of light */
+  var atrBase = document.createElement('canvas'), abctx = atrBase.getContext('2d');
+  function paintAtriumBase() {
+    atrBase.width = Math.round(vw * dpr); atrBase.height = Math.round(vh * dpr);
+    var c = abctx; c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var cx = vw / 2, cy = vh * .42, S = Math.min(vw, vh * 1.1);
+    var bg = c.createRadialGradient(cx, cy, 10, cx, cy, Math.max(vw, vh) * .8); bg.addColorStop(0, '#3a2aa8'); bg.addColorStop(.45, '#14267a'); bg.addColorStop(1, '#040828');
+    c.fillStyle = bg; c.fillRect(0, 0, vw, vh);
+    /* wall honeycomb */
+    var R = S * .045, w = Math.sqrt(3) * R;
+    c.lineWidth = 1.5;
+    for (var y = -R; y < vh + R; y += R * 1.5) for (var x = -w, row = Math.round(y / (R * 1.5)); x < vw + w; x += w) {
+      var xx = x + (row & 1 ? w / 2 : 0), d = Math.hypot((xx - cx) / vw, (y - cy) / vh);
+      hexPath(c, xx, y, R - 1); c.strokeStyle = 'rgba(242,194,91,' + (.05 + .22 * Math.max(0, 1 - d * 1.6)) + ')'; c.stroke();
+    }
+    /* stacked balconies (3 levels) */
+    for (var L = 0; L < 3; L++) {
+      var ey = cy - S * .26 + L * S * .2, erx = S * (.62 - L * .04), ery = S * (.07 + L * .015);
+      c.beginPath(); c.ellipse(cx, ey, erx, ery, 0, 0, 6.3); c.strokeStyle = 'rgba(242,194,91,.75)'; c.lineWidth = 3; c.stroke();
+      c.beginPath(); c.ellipse(cx, ey + 8, erx, ery, 0, 0, Math.PI); c.strokeStyle = 'rgba(255,227,154,.35)'; c.lineWidth = 2; c.stroke();
+      for (var k = 0; k < 24; k++) { var a = k / 24 * Math.PI * 2, px = cx + Math.cos(a) * erx, py = ey + Math.sin(a) * ery; if (Math.sin(a) < -0.2) continue; c.fillStyle = 'rgba(255,214,120,.8)'; c.beginPath(); c.arc(px, py, 2.4, 0, 6.3); c.fill(); }
+    }
+    /* floor */
+    var fy = cy + S * .42;
+    var fl = c.createRadialGradient(cx, fy, 10, cx, fy, S * .7); fl.addColorStop(0, 'rgba(255,214,140,.45)'); fl.addColorStop(1, 'rgba(255,214,140,0)');
+    c.save(); c.translate(cx, fy); c.scale(1, .28); c.fillStyle = fl; c.beginPath(); c.arc(0, 0, S * .7, 0, 6.3); c.fill(); c.restore();
+    /* inner waterfalls */
+    [-1, 1].forEach(function (s) { var x0 = cx + s * S * .58; var g2 = c.createLinearGradient(0, cy - S * .3, 0, fy); g2.addColorStop(0, 'rgba(190,225,255,.55)'); g2.addColorStop(1, 'rgba(120,170,255,.15)'); c.fillStyle = g2; c.fillRect(x0 - 10, cy - S * .32, 20, fy - (cy - S * .32)); });
+  }
+
+  /* ---------- camera ---------- */
+  var CAMS = {
+    aerial: { x: 1310, y: 800, z: .82 },
+    bridge: { x: HX, y: 1180, z: 1.55 },
+    entrance: { x: HX, y: 935, z: 2.5 },
+    portal: { x: HX, y: 900, z: 9 }
+  };
+  var cam = { x: CAMS.aerial.x, y: CAMS.aerial.y, z: CAMS.aerial.z }, anim = null;
+  function fit() { return Math.min(vw / 1150, vh / 950); }
+  function aerialCam() { var z = CAMS.aerial.z, s = fit() * z, portrait = vh > vw * 1.1; return { x: portrait ? CAMS.aerial.x : HX - (vw * .2) / s, y: portrait ? 760 - (vh * .2) / s : CAMS.aerial.y, z: z }; }
+  function flyTo(t, ms, done) {
+    if (reduce || ms === 0) { cam.x = t.x; cam.y = t.y; cam.z = t.z; anim = null; if (done) done(); return; }
+    anim = { from: { x: cam.x, y: cam.y, z: cam.z }, to: t, t0: performance.now(), ms: ms, done: done };
+  }
+  function ease(t) { return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+  function project(wx, wy) { var s = fit() * cam.z; return [(wx - cam.x) * s + vw / 2, (wy - cam.y) * s + vh / 2]; }
+
+  /* ---------- per-frame drawing ---------- */
+  var bees = [];
+  for (var bi = 0; bi < 18; bi++) bees.push({ a: Math.random() * 6.3, r: 320 + Math.random() * 260, sp: (.004 + Math.random() * .006) * (Math.random() < .5 ? -1 : 1), y: 640 + Math.random() * 360, bob: Math.random() * 6 });
+  var abees = [];
+  for (var bj = 0; bj < 14; bj++) abees.push({ x: Math.random(), y: Math.random(), vx: (Math.random() - .5) * .002, vy: (Math.random() - .5) * .0015, ph: Math.random() * 6 });
+  function drawBee(c, x, y, s, t) {
+    c.save(); c.translate(x, y);
+    c.fillStyle = 'rgba(230,240,255,.6)'; var flap = Math.abs(Math.sin(t * 40)) * .8 + .2;
+    c.beginPath(); c.ellipse(-s * .5, -s * .7, s * .55, s * .35 * flap, -.5, 0, 6.3); c.ellipse(s * .5, -s * .7, s * .55, s * .35 * flap, .5, 0, 6.3); c.fill();
+    c.fillStyle = '#ffcf3d'; c.beginPath(); c.ellipse(0, 0, s, s * .65, 0, 0, 6.3); c.fill();
+    c.fillStyle = '#1a1205'; c.fillRect(-s * .25, -s * .62, s * .22, s * 1.24); c.fillRect(s * .25, -s * .55, s * .2, s * 1.1);
+    c.restore();
+  }
+  var mode = 'world', last = 0, running = true;
+  function frame(now) {
+    if (!running) return;
+    var t = now / 1000;
+    if (anim) {
+      var k = Math.min(1, (now - anim.t0) / anim.ms), e = ease(k);
+      cam.x = anim.from.x + (anim.to.x - anim.from.x) * e; cam.y = anim.from.y + (anim.to.y - anim.from.y) * e;
+      cam.z = Math.exp(Math.log(anim.from.z) + (Math.log(anim.to.z) - Math.log(anim.from.z)) * e);
+      if (k >= 1) { var d = anim.done; anim = null; if (d) d(); }
+    }
+    if (mode === 'world' || anim) drawWorld(t);
+    if (mode === 'atrium') drawAtrium(t);
+    placeHotspots();
+    requestAnimationFrame(frame);
+  }
+  function drawWorld(t) {
+    var c = wctx, s = fit() * cam.z;
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    /* fill beyond the painted world: sky above, lake below */
+    var top = (0 - cam.y) * s + vh / 2, bot = (H - cam.y) * s + vh / 2;
+    c.fillStyle = '#040828'; c.fillRect(0, 0, vw, Math.max(0, top) + 1);
+    c.fillStyle = '#050a2e'; c.fillRect(0, Math.min(vh, bot) - 1, vw, vh);
+    c.save(); c.translate(vw / 2, vh / 2); c.scale(s, s); c.translate(-cam.x, -cam.y);
+    var left = cam.x - vw / 2 / s;
+    if (left < 0) { c.fillStyle = '#0a1046'; c.fillRect(left - 10, 0, -left + 10, H); }
+    if (cam.x + vw / 2 / s > W) { c.fillStyle = '#0a1046'; c.fillRect(W, 0, cam.x + vw / 2 / s - W + 10, H); }
+    c.drawImage(layer, 0, 0, W, H);
+    /* waterfall motion */
+    c.globalAlpha = .55; c.fillStyle = '#ffffff';
+    [[350, 480, 46], [520, 470, 30], [2120, 510, 40], [2240, 470, 26]].forEach(function (f, i) {
+      for (var j = 0; j < 7; j++) { var yy = f[1] + ((t * 220 + j * 90 + i * 37) % (1060 - f[1])); c.fillRect(f[0] + (j * 13 % f[2]), yy, 3, 26); }
+    });
+    c.globalAlpha = 1;
+    /* glowing honey windows */
+    domeCells.forEach(function (cell) { if (!cell.lit) return; var a = .25 + .25 * Math.sin(t * 1.6 + cell.tw); hexPath(c, cell.x, cell.y, 34); c.fillStyle = 'rgba(255,245,200,' + a.toFixed(2) + ')'; c.fill(); });
+    /* portal pulse */
+    var pr = c.createRadialGradient(HX, PORTAL_Y - 110, 5, HX, PORTAL_Y - 110, 150 + 20 * Math.sin(t * 2));
+    pr.addColorStop(0, 'rgba(255,255,255,.55)'); pr.addColorStop(1, 'rgba(155,92,255,0)'); c.fillStyle = pr; c.beginPath(); c.arc(HX, PORTAL_Y - 110, 170, 0, 6.3); c.fill();
+    /* lake shimmer */
+    c.strokeStyle = 'rgba(255,220,150,.25)'; c.lineWidth = 2;
+    for (var m = 0; m < 14; m++) { var ly = 1080 + m * 28, lx = HX - 380 + ((m * 97 + t * 30) % 760); c.beginPath(); c.moveTo(lx, ly); c.lineTo(lx + 40 + m * 3, ly); c.stroke(); }
+    /* bridge lamps */
+    [-1, 1].forEach(function (sd) { for (var q = 0; q <= 5; q++) { var e2 = (q / 5) * (q / 5), px = HX + sd * (100 + 260 * e2), py = PORTAL_Y + 2 + (H - PORTAL_Y) * e2 - (26 + 54 * e2); var lg = c.createRadialGradient(px, py, 1, px, py, 18 + 20 * e2); lg.addColorStop(0, 'rgba(255,240,190,.95)'); lg.addColorStop(1, 'rgba(255,200,90,0)'); c.fillStyle = lg; c.beginPath(); c.arc(px, py, 18 + 20 * e2, 0, 6.3); c.fill(); } });
+    /* bees around the hive */
+    bees.forEach(function (b) { b.a += b.sp; var bx = HX + Math.cos(b.a) * b.r, by = b.y + Math.sin(b.a) * 60 + Math.sin(t * 3 + b.bob) * 10; drawBee(c, bx, by, 9, t + b.bob); });
+    c.restore();
+  }
+  function drawAtrium(t) {
+    var c = actx; c.setTransform(1, 0, 0, 1, 0, 0);
+    c.drawImage(atrBase, 0, 0);
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var cx = vw / 2, cy = vh * .42, S = Math.min(vw, vh * 1.1);
+    /* light column + beams */
+    var col = c.createLinearGradient(cx - S * .08, 0, cx + S * .08, 0); col.addColorStop(0, 'rgba(255,230,170,0)'); col.addColorStop(.5, 'rgba(255,236,190,' + (.32 + .08 * Math.sin(t * 1.3)).toFixed(2) + ')'); col.addColorStop(1, 'rgba(255,230,170,0)');
+    c.fillStyle = col; c.fillRect(cx - S * .1, 0, S * .2, vh);
+    for (var k = 0; k < 5; k++) { var a = t * .15 + k * 1.26; c.save(); c.translate(cx, -20); c.rotate(Math.sin(a) * .35); var bg = c.createLinearGradient(0, 0, 0, vh); bg.addColorStop(0, 'rgba(255,240,200,.16)'); bg.addColorStop(1, 'rgba(255,240,200,0)'); c.fillStyle = bg; c.beginPath(); c.moveTo(-8, 0); c.lineTo(8, 0); c.lineTo(60, vh); c.lineTo(-60, vh); c.closePath(); c.fill(); c.restore(); }
+    /* floating emblem */
+    /* inner waterfall motion */
+    c.fillStyle = 'rgba(255,255,255,.4)';
+    [-1, 1].forEach(function (sd) { var x0 = cx + sd * S * .58; for (var j = 0; j < 6; j++) { var yy = cy - S * .32 + ((t * 160 + j * 60) % (S * .74)); c.fillRect(x0 - 6 + j * 2, yy, 2, 18); } });
+    abees.forEach(function (b) { b.x += b.vx; b.y += b.vy; if (b.x < .05 || b.x > .95) b.vx *= -1; if (b.y < .12 || b.y > .85) b.vy *= -1; drawBee(c, b.x * vw, b.y * vh + Math.sin(t * 3 + b.ph) * 6, 6, t + b.ph); });
+  }
+
+  /* ---------- hotspots ---------- */
+  var HOTS = { aerial: ['hotBridge', HX, 1300], bridge: ['hotGate', HX, 1090], entrance: ['hotPortal', HX, 930] };
+  var scene = 'aerial', welcomeOpen = true;
+  function placeHotspots() {
+    ['hotBridge', 'hotGate', 'hotPortal'].forEach(function (id) { $(id).classList.remove('on'); });
+    if (mode !== 'world' || anim || tour.on) return;
+    if (scene === 'aerial' && welcomeOpen) return;
+    var h = HOTS[scene]; if (!h) return;
+    var p = project(h[1], h[2]), el = $(h[0]);
+    el.style.left = Math.max(60, Math.min(vw - 60, p[0])) + 'px'; el.style.top = Math.max(110, Math.min(vh - 180, p[1])) + 'px'; el.classList.add('on');
+  }
+
+  /* ---------- routing ---------- */
+  var ORDER = ['aerial', 'bridge', 'entrance', 'atrium'];
+  var NAMES = { aerial: 'Aerial view', bridge: 'Golden bridge', entrance: 'Hive entrance', atrium: 'The atrium', contact: 'Talk to the Hive' };
+  var CAPS = {
+    aerial: '<b>The Living Hive.</b> One band, many hands, every step intentional.',
+    bridge: '<b>The golden bridge.</b> Every project starts with a clear path in.',
+    entrance: '<b>The gate.</b> Organize. Nurture. Expand. Step through when you are ready.',
+    atrium: '<b>The atrium.</b> Six chambers around one column of light.'
+  };
+  var capTimer;
+  function caption(html, ms) { var el = $('caption'); clearTimeout(capTimer); el.innerHTML = html; el.classList.add('show'); if (ms) capTimer = setTimeout(function () { el.classList.remove('show'); }, ms); }
+  function hideCaption() { $('caption').classList.remove('show'); }
+
+  function setDock(route) {
+    var where = $('where'), steps = $('steps'), base = route.split('/')[0];
+    var idx = ORDER.indexOf(base === 'chamber' || base === 'contact' ? 'atrium' : base);
+    where.innerHTML = 'You are at <b>' + esc(route.indexOf('chamber/') === 0 ? (chById(route.split('/')[1]) || {}).name + ' chamber' : NAMES[base] || '') + '</b>';
+    var h = '';
+    if (idx > 0) h += '<button class="pill" data-go="' + ORDER[idx - 1] + '">‹ ' + NAMES[ORDER[idx - 1]] + '</button>';
+    if (idx < ORDER.length - 1) h += '<button class="pill gold" data-go="' + ORDER[idx + 1] + '">' + (ORDER[idx + 1] === 'atrium' ? 'Enter the hive' : NAMES[ORDER[idx + 1]]) + ' ›</button>';
+    steps.innerHTML = h;
+    document.querySelectorAll('.menu a').forEach(function (a) { a.classList.toggle('now', a.dataset.r === route); });
+  }
+  function chById(id) { for (var i = 0; i < CH.length; i++) if (CH[i].id === id) return CH[i]; return id === 'contact' ? { id: 'contact', name: 'Talk to the Hive', tag: 'Start a project' } : null; }
+
+  var current = '';
+  function go(route) { if (location.hash !== '#/' + route) location.hash = '#/' + route; else apply(route, true); }
+  function apply(route, animate) {
+    if (!route) route = 'aerial';
+    var parts = route.split('/'), base = parts[0];
+    if (['aerial', 'bridge', 'entrance', 'atrium', 'chamber', 'contact'].indexOf(base) < 0) { route = 'aerial'; base = 'aerial'; }
+    if (base === 'chamber' && !chById(parts[1])) { route = 'atrium'; base = 'atrium'; }
+    var prev = current; current = route;
+    var ms = animate ? 2000 : 0;
+    closeChamber(base === 'chamber' || base === 'contact');
+    if (base !== 'aerial') hideWelcome();
+    if (ORDER.indexOf(base) > -1 && base !== 'atrium') {
+      var fromAtrium = mode === 'atrium';
+      mode = 'world'; document.body.classList.remove('in-atrium');
+      if (fromAtrium && animate) { cam.x = CAMS.portal.x; cam.y = CAMS.portal.y; cam.z = 4; }
+      scene = base; flyTo(base === 'aerial' ? aerialCam() : CAMS[base], ms, function () { if (!tour.on) caption(CAPS[base], 6000); });
+    } else {
+      /* atrium, chambers, contact all live inside the hive */
+      if (mode !== 'atrium') {
+        if (animate && !reduce) {
+          if (prev.indexOf('entrance') !== 0) flyTo(CAMS.entrance, 900, dive); else dive();
+        } else enterAtrium();
+      } else afterAtrium();
+    }
+    function dive() { flyTo(CAMS.portal, 1300, function () { $('flash').classList.add('on'); setTimeout(function () { enterAtrium(); setTimeout(function () { $('flash').classList.remove('on'); }, 120); }, 330); }); }
+    function enterAtrium() { mode = 'atrium'; scene = 'atrium'; document.body.classList.add('in-atrium'); afterAtrium(); }
+    function afterAtrium() {
+      if (base === 'chamber') openChamber(chById(parts[1]));
+      else if (base === 'contact') openChamber(chById('contact'));
+      else if (!tour.on) caption(CAPS.atrium, 6000);
+    }
+    setDock(route);
+    try { sessionStorage.setItem('hiveSeen', '1'); } catch (e) {}
+  }
+  window.addEventListener('hashchange', function () { apply(location.hash.replace(/^#\/?/, ''), true); });
+
+  /* ---------- chamber sheet ---------- */
+  var chamberEl = $('chamber'), openId = null;
+  function openChamber(ch) {
+    openId = ch.id;
+    $('chTag').textContent = ch.id === 'contact' ? 'Talk to the Hive' : 'Chamber ' + (CH.indexOf(ch) + 1) + ' of ' + CH.length;
+    $('chBody').innerHTML = chamberHTML(ch);
+    $('sheet').scrollTop = 0;
+    chamberEl.classList.add('open'); document.body.classList.add('ch-open');
+    $('chPrev').style.display = $('chNext').style.display = ch.id === 'contact' ? 'none' : '';
+    if (ch.id === 'contact') {
+      var n = $('cName'), note = $('cNote'); note.value = noteText('');
+      n.oninput = function () { note.value = noteText(n.value); };
+      $('cCopy').onclick = function () { copy(note.value, 'Note copied. Paste it into an email to ' + D.email); };
+      $('cMail').onclick = function () { copy(D.email, 'Email copied'); };
+    }
+    hideCaption();
+  }
+  function closeChamber(keep) { if (!keep) { chamberEl.classList.remove('open'); document.body.classList.remove('ch-open'); openId = null; } }
+  function stepChamber(d) { var i = 0; for (var k = 0; k < CH.length; k++) if (CH[k].id === openId) i = k; go('chamber/' + CH[(i + d + CH.length) % CH.length].id); }
+  $('chPrev').onclick = function () { stopTour(); stepChamber(-1); };
+  $('chNext').onclick = function () { stopTour(); stepChamber(1); };
+
+  /* ---------- welcome ---------- */
+  function hideWelcome() { welcomeOpen = false; $('welcome').classList.add('hide'); }
+  $('freeBtn').onclick = function () { hideWelcome(); caption('Tap the glowing markers, or use the buttons below to move through the hive.', 5000); };
+  $('beginBtn').onclick = function () { hideWelcome(); startTour(); };
+
+  /* ---------- guided tour ---------- */
+  var tour = { on: false, i: 0, timer: null };
+  var TOUR = [
+    { r: 'aerial', cap: '<b>Welcome to the Living Hive.</b> Every bee has a job, every step is intentional.', ms: 4200 },
+    { r: 'bridge', cap: CAPS.bridge, ms: 4200 },
+    { r: 'entrance', cap: CAPS.entrance, ms: 3800 },
+    { r: 'atrium', cap: '<b>The atrium.</b> Six chambers, one band. Let us look inside each one.', ms: 5200 }
+  ];
+  CH.forEach(function (ch) { TOUR.push({ r: 'chamber/' + ch.id, cap: null, ms: 3600 }); });
+  TOUR.push({ r: 'atrium', cap: '<b>Your turn.</b> Tap any chamber to explore, or talk to the hive.', ms: 0 });
+  function startTour() { tour.on = true; tour.i = 0; $('tourBtn').innerHTML = '■ <span>Stop</span>'; runStep(); }
+  function runStep() {
+    if (!tour.on) return;
+    var st = TOUR[tour.i]; go(st.r);
+    if (st.cap) caption(st.cap, st.ms ? 0 : 7000);
+    if (st.r.indexOf('chamber/') === 0) { var dEl = document.querySelector('.door[data-go="' + st.r + '"]'); }
+    if (!st.ms) { stopTour(); return; }
+    tour.timer = setTimeout(function () { tour.i++; if (tour.i < TOUR.length) runStep(); else stopTour(); }, st.ms + (st.r === 'atrium' && tour.i === 3 ? 1600 : 2000));
+  }
+  function stopTour() { if (!tour.on) return; tour.on = false; clearTimeout(tour.timer); $('tourBtn').innerHTML = '▶ <span>Tour</span>'; }
+  $('tourBtn').onclick = function () { if (tour.on) { stopTour(); caption('Tour stopped. Explore at your own pace.', 3500); } else { hideWelcome(); startTour(); } };
+
+  /* ---------- taps ---------- */
+  document.addEventListener('click', function (e) {
+    var pick = e.target.closest('[data-pick]');
+    if (pick) {
+      var k = pick.dataset.pick, i = picked.indexOf(k);
+      if (i > -1) picked.splice(i, 1); else picked.push(k);
+      pick.setAttribute('aria-pressed', i < 0); pick.textContent = i < 0 ? '✓ In my request' : '+ Add to my request';
+      return;
+    }
+    var g = e.target.closest('[data-go]');
+    if (g) { if (e.isTrusted) stopTour(); closeMenu(); go(g.dataset.go); }
+  });
+  var menu = $('menu');
+  function closeMenu() { menu.classList.remove('open'); }
+  $('menuBtn').onclick = function () { menu.classList.add('open'); };
+  $('menuClose').onclick = closeMenu;
+  menu.addEventListener('click', function (e) { if (e.target === menu) closeMenu(); var a = e.target.closest('a[data-r]'); if (a) { stopTour(); closeMenu(); } });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { if (menu.classList.contains('open')) closeMenu(); else if (openId) go('atrium'); } });
+
+  /* ---------- sizing ---------- */
+  function resize() {
+    vw = window.innerWidth; vh = window.innerHeight;
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    [worldCv, atrCv].forEach(function (cv) { cv.width = Math.round(vw * dpr); cv.height = Math.round(vh * dpr); });
+    var q = vw > 900 ? 1.5 : 1;
+    if (q !== LQ || !layer.width) { LQ = q; paintWorld(); }
+    paintAtriumBase();
+  }
+  var rt; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(resize, 120); });
+  document.addEventListener('visibilitychange', function () { running = !document.hidden; if (running) requestAnimationFrame(frame); });
+
+  resize();
+  var ac = aerialCam(); cam.x = ac.x; cam.y = ac.y; cam.z = ac.z;
+  var start = location.hash.replace(/^#\/?/, '');
+  if (start && start !== 'aerial') { hideWelcome(); apply(start, false); } else { current = 'aerial'; setDock('aerial'); }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
