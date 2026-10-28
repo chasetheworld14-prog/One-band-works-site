@@ -274,6 +274,7 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
     <a href="#/story" data-r="story"><i></i>Our story: O.N.E. + B.A.N.D.</a>
     <h4>Talk</h4>
     <a href="#/contact" data-r="contact"><i></i>Talk to the Hive</a>
+    <p style="opacity:.5;font-size:.7rem;margin-top:18px">Version 2.3 · bee flight + sound</p>
   </nav>
 </div>
 
@@ -749,7 +750,7 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
       return;
     }
     var g = e.target.closest('[data-go]');
-    if (g && g.classList.contains('cell3') && e.isTrusted && !reduce && mode === 'atrium' && !beeRun) { e.preventDefault(); stopTour(); beeFlight(g, g.dataset.go); return; }
+    if (g && g.classList.contains('cell3') && e.isTrusted && mode === 'atrium' && !beeRun) { e.preventDefault(); stopTour(); beeFlight(g, g.dataset.go); return; }
     if (g) { if (e.isTrusted) stopTour(); closeMenu(); go(g.dataset.go); }
   });
   var menu = $('menu');
