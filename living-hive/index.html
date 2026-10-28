@@ -31,7 +31,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
 #stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 #atriumCv { opacity: 0; transition: opacity .7s; }
 body.in-atrium #atriumCv { opacity: 1; }
-#combFx { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; }
 #beeFx { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 11; pointer-events: none; display: none; }
 body.bee-fly #beeFx { display: block; }
 body.bee-fly .atrium, body.bee-fly .dock { pointer-events: none; }
@@ -151,7 +150,7 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
 .cell3:hover .face, .cell3:focus-visible .face, .cell3.glow .face { transform: translateZ(42px); }
 .cell3:hover, .cell3:focus-visible, .cell3.glow { --fill: 45%; outline: none; }
 .cell3 svg { width: clamp(20px, 5.4vw, 36px); height: auto; stroke: var(--gold2); fill: none; stroke-width: 1.6; filter: drop-shadow(0 0 6px rgba(242, 194, 91, .7)); }
-.cell3 b { font-family: var(--display); font-size: clamp(.6rem, 2.5vw, .95rem); letter-spacing: .06em; text-shadow: 0 1px 6px rgba(0, 0, 0, .7); }
+.cell3 b { font-family: var(--display); font-size: calc(var(--W) * .085); letter-spacing: .03em; white-space: nowrap; text-shadow: 0 1px 6px rgba(0, 0, 0, .7); }
 .cell3 small { font-size: clamp(.5rem, 1.9vw, .7rem); color: #e2e5ff; line-height: 1.2; text-shadow: 0 1px 4px rgba(0, 0, 0, .7); }
 .cell3 .cnt { position: absolute; top: 14%; font-size: .6rem; font-weight: 700; color: #2a1a00; background: var(--gold2); border-radius: 99px; padding: 1px 6px; z-index: 3; }
 .cell3.core .face { background: radial-gradient(circle at 50% 40%, #2a3fa8, #0b1a5c 75%); padding: 12%; }
@@ -213,7 +212,6 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
   <canvas id="worldCv"></canvas>
   <canvas id="atriumCv"></canvas>
   <canvas id="beeFx" aria-hidden="true"></canvas>
-  <canvas id="combFx" aria-hidden="true"></canvas>
   <div id="flash"></div>
 </div>
 
@@ -277,7 +275,7 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
     <a href="#/story" data-r="story"><i></i>Our story: O.N.E. + B.A.N.D.</a>
     <h4>Talk</h4>
     <a href="#/contact" data-r="contact"><i></i>Talk to the Hive</a>
-    <p style="opacity:.5;font-size:.7rem;margin-top:18px">Version 2.5 · worker bees + zen hum</p>
+    <p style="opacity:.5;font-size:.7rem;margin-top:18px">Version 2.6 · ring riders build the comb</p>
   </nav>
 </div>
 
@@ -536,7 +534,7 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
   var bees = [];
   for (var bi = 0; bi < 18; bi++) bees.push({ a: Math.random() * 6.3, r: 320 + Math.random() * 260, sp: (.004 + Math.random() * .006) * (Math.random() < .5 ? -1 : 1), y: 640 + Math.random() * 360, bob: Math.random() * 6 });
   var abees = [];
-  for (var bj = 0; bj < 14; bj++) abees.push({ x: Math.random(), y: Math.random(), vx: (Math.random() - .5) * .002, vy: (Math.random() - .5) * .0015, ph: Math.random() * 6 });
+  for (var bj = 0; bj < 6; bj++) abees.push({ x: Math.random(), y: Math.random(), vx: (Math.random() - .5) * .002, vy: (Math.random() - .5) * .0015, ph: Math.random() * 6 });
   function drawBee(c, x, y, s, t) {
     c.save(); c.translate(x, y);
     c.fillStyle = 'rgba(230,240,255,.6)'; var flap = Math.abs(Math.sin(t * 40)) * .8 + .2;
@@ -614,6 +612,7 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
     /* inner waterfall motion */
     c.fillStyle = 'rgba(255,255,255,.4)';
     [-1, 1].forEach(function (sd) { var x0 = cx + sd * S * .58; for (var j = 0; j < 6; j++) { var yy = cy - S * .32 + ((t * 160 + j * 60) % (S * .74)); c.fillRect(x0 - 6 + j * 2, yy, 2, 18); } });
+    drawRingComb(c, t, performance.now());
     abees.forEach(function (b) { b.x += b.vx; b.y += b.vy; if (b.x < .05 || b.x > .95) b.vx *= -1; if (b.y < .12 || b.y > .85) b.vy *= -1; drawBee(c, b.x * vw, b.y * vh + Math.sin(t * 3 + b.ph) * 6, 6, t + b.ph); });
   }
 
@@ -764,74 +763,88 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
   menu.addEventListener('click', function (e) { if (e.target === menu) closeMenu(); var a = e.target.closest('a[data-r]'); if (a) { stopTour(); closeMenu(); } });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { if (menu.classList.contains('open')) closeMenu(); else if (openId) go('atrium'); } });
 
-  /* ---------- worker bees: honey keeps flowing in, a comb grows from the corners as you explore ---------- */
-  var combCv = $('combFx'), cctx = combCv.getContext('2d'), comb = { cells: [], workers: [], saved: 0, lastNew: 0 };
-  try { comb.saved = Math.max(0, parseInt(localStorage.getItem('obwComb') || '0', 10) || 0); } catch (e) {}
-  (function buildOrder() {
-    /* axial hex coords around each bottom corner, ordered from the corner outward */
-    var list = [];
-    [0, 1].forEach(function (side) {
-      for (var q = -9; q <= 9; q++) for (var r = -9; r <= 9; r++) {
-        var x = Math.sqrt(3) * (q + r / 2), y = 1.5 * r;
-        if (side ? x > .9 : x < -.9) continue; if (y > 1) continue;
-        var d = Math.hypot(x, y); if (d > 10.5) continue;
-        list.push({ side: side, ax: x, ay: y, d: d + Math.random() * .8, build: 0, fill: 0, born: 0 });
+  /* ---------- the three atrium rings: bees ride them and build a honeycomb along them ---------- */
+  var comb = { cells: [], built: 0, riders: [], lastNew: 0, lastBg: 0, geoKey: '' };
+  try { comb.saved = Math.max(0, parseInt(localStorage.getItem('obwComb') || '0', 10) || 0); } catch (e) { comb.saved = 0; }
+  function ringGeo(L) { var cx = vw / 2, cy = vh * .42, S = Math.min(vw, vh * 1.1); return { cx: cx, ey: cy - S * .26 + L * S * .2, rx: S * (.62 - L * .04), ry: S * (.07 + L * .015), S: S }; }
+  function angGap(a, b) { var d = Math.abs(a - b) % (Math.PI * 2); return d > Math.PI ? Math.PI * 2 - d : d; }
+  function ringPt(g, a) { return [g.cx + Math.cos(a) * g.rx, g.ey + Math.sin(a) * g.ry]; }
+  function ringTable(g) { /* angle by arc length, so cells sit evenly along the ellipse */
+    var n = 720, cum = [0], tot = 0, prev = ringPt(g, 0);
+    for (var i = 1; i <= n; i++) { var p = ringPt(g, i / n * Math.PI * 2); tot += Math.hypot(p[0] - prev[0], p[1] - prev[1]); cum.push(tot); prev = p; }
+    return function (u) { var target = ((u % 1) + 1) % 1 * tot, lo = 0, hi = n; while (lo < hi) { var m = (lo + hi) >> 1; if (cum[m] < target) lo = m + 1; else hi = m; } return lo / n * Math.PI * 2; };
+  }
+  function buildRingComb() {
+    var key = vw + 'x' + vh; if (comb.geoKey === key) return; comb.geoKey = key;
+    var fill = comb.cells.map(function (k) { return k.fill; }), list = [];
+    comb.R = Math.max(5, Math.min(vw, vh * 1.1) * .019);
+    comb.rings = [0, 1, 2].map(function (L) {
+      var g = ringGeo(L), at = ringTable(g), len = 0, prev = ringPt(g, 0);
+      for (var i = 1; i <= 360; i++) { var p = ringPt(g, i / 360 * Math.PI * 2); len += Math.hypot(p[0] - prev[0], p[1] - prev[1]); prev = p; }
+      var N = Math.floor(len / (Math.sqrt(3) * comb.R));
+      for (var row = 0; row < 2; row++) for (var j = 0; j < N; j++) {
+        var u = (j + (row ? .5 : 0)) / N, a = at(u), cs = Math.cos(a), sn = Math.sin(a);
+        if (L === 0 && row && sn > 0 && Math.abs(cs) < .6) continue; /* keep the atrium title clear */
+        /* grow from the two visible spots beside the chamber comb, out along the ring */
+        var da = Math.min(angGap(a, Math.acos(.75)), angGap(a, Math.PI - Math.acos(.75)));
+        list.push({ L: L, row: row, u: u, a: a, key: da + L * .03 + row * .02 + Math.random() * .01 });
       }
+      return { g: g, at: at };
     });
-    list.sort(function (a, b) { return a.d - b.d; });
-    comb.order = list;
-  })();
-  function combR() { return Math.max(11, Math.min(18, Math.min(vw, vh) / 34)); }
-  function cellXY(c) { var R = combR(); return [c.side ? vw - 8 + c.ax * R : 8 + c.ax * R, vh - 6 + c.ay * R]; }
-  function addCell(instant) {
-    var c = comb.order[comb.cells.length]; if (!c) return null;
-    c.build = instant ? 1 : 0; c.fill = instant ? 1 : 0; c.born = performance.now(); comb.cells.push(c); return c;
+    list.sort(function (x, y) { return x.key - y.key; });
+    list.forEach(function (k, i) { k.fill = fill[i] || 0; k.pend = 0; });
+    comb.cells = list;
+    if (!fill.length) { comb.built = Math.min(list.length, comb.saved + 3); for (var i = 0; i < Math.min(comb.saved, list.length); i++) list[i].fill = 1; }
+    if (!comb.riders.length) [0, 1, 2].forEach(function (L) { for (var r = 0; r < 4; r++) comb.riders.push({ L: L, u: r / 4 + Math.random() * .1, sp: (.018 + Math.random() * .012) * (L === 1 ? -1 : 1), cargo: Math.random() < .7, stop: 0, ph: Math.random() * 6 }); });
   }
-  for (var si = 0; si < Math.min(comb.saved, comb.order.length); si++) addCell(true);
-  function nextTarget() { for (var i = 0; i < comb.cells.length; i++) { var c = comb.cells[i]; if (c.fill + (c.pending || 0) < 1 && c.build >= 1) return c; } return null; }
-  function spawnWorker(now) {
-    var tgt = nextTarget(); if (!tgt) return;
-    tgt.pending = (tgt.pending || 0) + .34;
-    var from = Math.random(), sx = from < .5 ? (tgt.side ? vw + 30 : -30) : Math.random() * vw, sy = from < .5 ? vh * (.35 + Math.random() * .4) : -30;
-    comb.workers.push({ sx: sx, sy: sy, tgt: tgt, t0: now, dur: 3800 + Math.random() * 2200, ph: Math.random() * 6, ex: tgt.side ? vw * .55 : vw * .45, ey: -40 });
+  function cellPx(k) { var g = comb.rings[k.L].g, p = ringPt(g, k.a), sc = .72 + .38 * Math.sin(k.a), R = comb.R * sc; return [p[0], p[1] - (k.row ? R * 1.5 : 0) - R * .2, R, sc]; }
+  function addHoney(k, amt) { k.fill = Math.min(1, k.fill + amt); if (k.fill >= 1) saveComb(); }
+  function growComb(now) {
+    var unfilled = 0; for (var i = 0; i < comb.built; i++) if (comb.cells[i].fill < 1) unfilled++;
+    if (now - comb.lastNew > 2600 && unfilled < 6 && comb.built < comb.cells.length) { comb.lastNew = now; comb.built++; }
   }
-  function hexAt(c, x, y, R) { c.beginPath(); for (var i = 0; i < 6; i++) { var a = Math.PI / 6 + i * Math.PI / 3; c[i ? 'lineTo' : 'moveTo'](x + R * Math.cos(a), y + R * Math.sin(a)); } c.closePath(); }
+  function firstOpen(L) { for (var i = 0; i < comb.built; i++) { var k = comb.cells[i]; if ((L === undefined || k.L === L) && k.fill + k.pend < 1) return k; } return null; }
   function combStep(now) {
-    var c = cctx, R = combR(), t = now / 1000;
-    c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, vw, vh);
-    /* grow: a new wax cell every few seconds while the newest ones are filling */
-    var unfilled = comb.cells.filter(function (k) { return k.fill < 1; }).length;
-    if (now - comb.lastNew > 3500 && unfilled < 4) { comb.lastNew = now; addCell(false); }
-    if (comb.workers.length < 4 && Math.random() < .02) spawnWorker(now);
-    /* cells */
-    comb.cells.forEach(function (k) {
-      var p = cellXY(k); k.build = Math.min(1, k.build + .012);
-      c.save(); c.globalAlpha = k.fill >= 1 ? 1 : .9;
-      hexAt(c, p[0], p[1], R * .93); c.fillStyle = 'rgba(12,20,80,.55)'; c.fill();
+    if (!vw) return; buildRingComb(); growComb(now);
+    /* outside the atrium the bees keep working off-screen, so the comb grows through the whole visit */
+    if (mode !== 'atrium' && now - comb.lastBg > 4000) { comb.lastBg = now; var k = firstOpen(); if (k) addHoney(k, .34); }
+  }
+  function drawRingComb(c, t, now) {
+    buildRingComb();
+    var hexes = [];
+    for (var i = 0; i < comb.built; i++) hexes.push(comb.cells[i]);
+    hexes.sort(function (x, y) { return Math.sin(x.a) - Math.sin(y.a); });
+    hexes.forEach(function (k) {
+      var p = cellPx(k), R = p[2], back = Math.sin(k.a) < 0;
+      c.save(); c.globalAlpha = back ? .55 : 1;
+      hexPath(c, p[0], p[1], R * .95); c.fillStyle = 'rgba(14,22,90,.75)'; c.fill();
       if (k.fill > 0) {
-        c.save(); hexAt(c, p[0], p[1], R * .93); c.clip();
-        var lv = p[1] + R - k.fill * 2 * R, hg = c.createLinearGradient(0, lv, 0, p[1] + R); hg.addColorStop(0, '#ffd66e'); hg.addColorStop(1, '#d98b12');
-        c.fillStyle = hg; c.fillRect(p[0] - R, lv + Math.sin(t * 2 + p[0]) * (k.fill < 1 ? 1.2 : 0), 2 * R, 2 * R);
-        if (k.fill >= 1) { c.fillStyle = 'rgba(255,255,255,.18)'; c.beginPath(); c.ellipse(p[0] - R * .3, p[1] - R * .35, R * .28, R * .14, -.5, 0, 6.3); c.fill(); }
+        c.save(); hexPath(c, p[0], p[1], R * .95); c.clip();
+        var lv = p[1] + R - k.fill * 2 * R, hg = c.createLinearGradient(0, p[1] - R, 0, p[1] + R); hg.addColorStop(0, '#ffe08a'); hg.addColorStop(1, '#d98b12');
+        c.fillStyle = hg; c.fillRect(p[0] - R, lv + (k.fill < 1 ? Math.sin(t * 2 + p[0]) : 0), 2 * R, 2 * R);
+        if (k.fill >= 1) { c.fillStyle = 'rgba(255,255,255,.28)'; c.beginPath(); c.ellipse(p[0] - R * .28, p[1] - R * .35, R * .3, R * .13, -.5, 0, 6.3); c.fill(); }
         c.restore();
       }
-      c.strokeStyle = 'rgba(242,194,91,' + (.35 + .5 * k.build).toFixed(2) + ')'; c.lineWidth = 1.5;
-      c.setLineDash([R * 6 * k.build, R * 6]); hexAt(c, p[0], p[1], R * .93); c.stroke(); c.setLineDash([]);
+      c.strokeStyle = 'rgba(255,214,120,.85)'; c.lineWidth = Math.max(1, R * .12); hexPath(c, p[0], p[1], R * .95); c.stroke();
       c.restore();
     });
-    /* workers: fly in carrying honey, hover and drip it in, fly away */
-    comb.workers = comb.workers.filter(function (w) {
-      var k = (now - w.t0) / w.dur, p = cellXY(w.tgt), x, y, carrying = k < .5;
-      if (k < .45) { var e = k / .45, ee = e * e * (3 - 2 * e); x = w.sx + (p[0] - w.sx) * ee + Math.sin(t * 3 + w.ph) * 18 * (1 - e); y = w.sy + (p[1] - R * 1.4 - w.sy) * ee + Math.cos(t * 4 + w.ph) * 12 * (1 - e); }
-      else if (k < .62) { x = p[0] + Math.sin(t * 9) * 3; y = p[1] - R * 1.4 + Math.sin(t * 11) * 2;
-        if (!w.dropped && k > .52) { w.dropped = true; w.tgt.drip = now; } }
-      else { var e2 = (k - .62) / .38; x = p[0] + (w.ex - p[0]) * e2 * e2; y = p[1] - R * 1.4 + (w.ey - p[1]) * e2 * e2; }
-      if (w.dropped && !w.done) { var dk = (now - w.tgt.drip) / 500; if (dk >= 1) { w.done = true; w.tgt.fill = Math.min(1, w.tgt.fill + .34); w.tgt.pending = Math.max(0, (w.tgt.pending || 0) - .34); if (w.tgt.fill >= 1) saveComb(); }
-        else { c.fillStyle = '#ffc93d'; c.beginPath(); c.arc(p[0], p[1] - R * 1.2 + dk * R * 1.1, 2.4, 0, 6.3); c.fill(); } }
-      drawBee(c, x, y, 6, t + w.ph);
-      if (carrying) { c.fillStyle = '#ffc93d'; c.beginPath(); c.arc(x, y + 7, 2.6, 0, 6.3); c.fill(); }
-      if (k >= 1 && !w.done) { w.tgt.pending = Math.max(0, (w.tgt.pending || 0) - .34); }
-      return k < 1;
+    /* riders: bees circling each ring; the ones carrying honey stop at the open cell and drip it in */
+    var dt = Math.min(.05, (now - (comb.lastT || now)) / 1000); comb.lastT = now;
+    comb.riders.forEach(function (b) {
+      var ring = comb.rings[b.L], tgt = firstOpen(b.L);
+      if (b.stop > 0) { b.stop -= dt; if (b.stop <= 0 && b.tgt) { b.tgt.pend = Math.max(0, b.tgt.pend - .34); addHoney(b.tgt, .34); b.tgt = null; b.cargo = false; b.laps = 0; } }
+      else {
+        var nu = b.u + b.sp * dt;
+        if (b.cargo && tgt) { var cu = tgt.u, crossed = b.sp > 0 ? ((cu - b.u + 1) % 1) < ((nu - b.u + 1) % 1) : ((b.u - cu + 1) % 1) < ((b.u - nu + 1) % 1); if (crossed) { nu = cu; b.stop = .9; b.tgt = tgt; tgt.pend += .34; } }
+        if ((Math.floor(nu) !== Math.floor(b.u))) { b.laps = (b.laps || 0) + 1; if (b.laps >= 1) b.cargo = true; }
+        b.u = ((nu % 1) + 1) % 1;
+      }
+      var a = ring.at(b.u), p = ringPt(ring.g, a), sc = .72 + .38 * Math.sin(a), hover = b.stop > 0;
+      var bx = p[0] + (hover ? Math.sin(t * 9) * 2 : 0), by = p[1] - comb.R * sc * (hover && b.tgt && b.tgt.row ? 3.4 : 2) + Math.sin(t * 4 + b.ph) * 2.5;
+      if (hover && b.tgt) { var tp = cellPx(b.tgt), dk = 1 - b.stop / .9; c.fillStyle = '#ffc93d'; c.beginPath(); c.arc(tp[0], by + 6 + (tp[1] - by - 6) * dk, 2.2 * sc + .5, 0, 6.3); c.fill(); }
+      c.save(); c.globalAlpha = Math.sin(a) < 0 ? .6 : 1; drawBee(c, bx, by, 7.5 * sc, t + b.ph);
+      if (b.cargo && !hover) { c.fillStyle = '#ffc93d'; c.beginPath(); c.arc(bx, by + 8 * sc, 2.6 * sc, 0, 6.3); c.fill(); }
+      c.restore();
     });
   }
   function saveComb() { var n = comb.cells.filter(function (k) { return k.fill >= 1; }).length; try { localStorage.setItem('obwComb', String(n)); } catch (e) {} }
@@ -986,7 +999,7 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
   function resize() {
     vw = window.innerWidth; vh = window.innerHeight;
     dpr = Math.min(2, window.devicePixelRatio || 1);
-    [worldCv, atrCv, $('beeFx'), $('combFx')].forEach(function (cv) { cv.width = Math.round(vw * dpr); cv.height = Math.round(vh * dpr); });
+    [worldCv, atrCv, $('beeFx')].forEach(function (cv) { cv.width = Math.round(vw * dpr); cv.height = Math.round(vh * dpr); });
     var q = vw > 900 ? 1.5 : 1;
     if (q !== LQ || !layer.width) { LQ = q; paintWorld(); }
     paintAtriumBase();
