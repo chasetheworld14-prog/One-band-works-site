@@ -325,7 +325,7 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
     <a href="#/story" data-r="story"><i></i>Our story: O.N.E. + B.A.N.D.</a>
     <h4>Talk</h4>
     <a href="#/contact" data-r="contact"><i></i>Talk to the Hive</a>
-    <p style="opacity:.5;font-size:.7rem;margin-top:18px">Version 3.1 · service previews</p>
+    <p style="opacity:.5;font-size:.7rem;margin-top:18px">Version 3.2 · honey harvest</p>
   </nav>
 </div>
 
@@ -748,7 +748,9 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
     /* inner waterfall motion */
     c.fillStyle = 'rgba(255,255,255,.4)';
     if (!ART.ok) [-1, 1].forEach(function (sd) { var x0 = cx + sd * S * .58; for (var j = 0; j < 6; j++) { var yy = cy - S * .32 + ((t * 160 + j * 60) % (S * .74)); c.fillRect(x0 - 6 + j * 2, yy, 2, 18); } });
+    drawShelf(c, t);
     drawRingComb(c, t, performance.now());
+    stepHarvest(c, t, performance.now());
     abees.forEach(function (b) { b.x += b.vx; b.y += b.vy; if (b.x < .05 || b.x > .95) b.vx *= -1; if (b.y < .12 || b.y > .85) b.vy *= -1; drawBee(c, b.x * vw, b.y * vh + Math.sin(t * 3 + b.ph) * 6, 6, t + b.ph); });
   }
 
@@ -986,6 +988,92 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
       if (b.cargo && !hover) { c.fillStyle = '#ffc93d'; c.beginPath(); c.arc(bx, by + 8 * sc, 2.6 * sc, 0, 6.3); c.fill(); }
       c.restore();
     });
+  }
+
+  /* ---------- honey harvest: a gloved hand empties full cells into jars on a shelf ---------- */
+  var jars = { cells: 0, per: 6 }, harvest = null, lastHarvest = 0;
+  try { jars.cells = Math.max(0, parseInt(localStorage.getItem('obwJars') || '0', 10) || 0); } catch (e) {}
+  function shelfGeo() {
+    var phone = vw < 640, w = phone ? 98 : 230, n = phone ? 3 : 4;
+    return phone ? { x: vw - w - 4, y: 150, w: w, n: n, jw: 24, jh: 32 } : { x: vw - w - 34, y: vh - 150, w: w, n: n, jw: 40, jh: 52 };
+  }
+  function jarSlots() {
+    var g = shelfGeo(), out = [], full = Math.floor(jars.cells / jars.per), start = Math.max(0, full - (g.n - 1));
+    for (var i = 0; i < g.n; i++) {
+      var idx = start + i, lvl = idx < full ? 1 : idx === full ? (jars.cells % jars.per) / jars.per : 0;
+      out.push({ x: g.x + 12 + i * ((g.w - 24 - g.jw) / (g.n - 1)) + g.jw / 2, y: g.y, lvl: lvl, lid: idx < full, cur: idx === full });
+    }
+    return out;
+  }
+  function drawShelf(c, t) {
+    var g = shelfGeo();
+    c.save();
+    /* brackets and plank */
+    c.fillStyle = '#5a3a1c'; c.fillRect(g.x + 14, g.y + 2, 6, 18); c.fillRect(g.x + g.w - 20, g.y + 2, 6, 18);
+    var pl = c.createLinearGradient(0, g.y, 0, g.y + 10); pl.addColorStop(0, '#b07a3c'); pl.addColorStop(1, '#6b4420');
+    c.fillStyle = pl; c.fillRect(g.x, g.y, g.w, 9); c.strokeStyle = 'rgba(255,214,120,.6)'; c.lineWidth = 1; c.strokeRect(g.x, g.y, g.w, 9);
+    jarSlots().forEach(function (j) {
+      var w = g.jw, h = g.jh, x = j.x - w / 2, y = j.y - h;
+      /* honey */
+      if (j.lvl > 0) {
+        var lv = y + 6 + (h - 8) * (1 - j.lvl), hg = c.createLinearGradient(0, lv, 0, y + h); hg.addColorStop(0, '#ffcf55'); hg.addColorStop(1, '#c97a0c');
+        c.save(); rr(c, x + 2, y + 5, w - 4, h - 6, 6); c.clip(); c.fillStyle = hg; c.fillRect(x, lv + (j.cur ? Math.sin(t * 2) * .8 : 0), w, h); c.restore();
+      }
+      /* glass */
+      rr(c, x, y + 3, w, h - 3, 7); c.fillStyle = 'rgba(200,225,255,.12)'; c.fill(); c.strokeStyle = 'rgba(230,240,255,.65)'; c.lineWidth = 1.5; c.stroke();
+      c.fillStyle = 'rgba(255,255,255,.35)'; c.fillRect(x + 4, y + 9, 2.5, h * .55);
+      /* lid and label */
+      if (j.lid) { c.fillStyle = '#e0a93a'; rr(c, x - 2, y - 2, w + 4, 7, 2); c.fill(); c.strokeStyle = '#8a5a12'; c.lineWidth = 1; c.stroke(); }
+      else { c.strokeStyle = 'rgba(230,240,255,.65)'; c.beginPath(); c.moveTo(x + 2, y + 3); c.lineTo(x + w - 2, y + 3); c.stroke(); }
+      if (j.lvl >= 1) { hexPath(c, j.x, y + h * .6, w * .18); c.fillStyle = 'rgba(28,63,184,.85)'; c.fill(); c.strokeStyle = '#ffe39a'; c.lineWidth = 1; c.stroke(); }
+    });
+    c.restore();
+  }
+  function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+  function drawHand(c, x, y, ang, sc, blob, ax, ay) {
+    /* sleeve from off-screen to the wrist */
+    c.save(); c.lineCap = 'round';
+    c.strokeStyle = '#141f5c'; c.lineWidth = 26 * sc; c.beginPath(); c.moveTo(ax, ay); c.lineTo(x - Math.cos(ang) * 22 * sc, y - Math.sin(ang) * 22 * sc); c.stroke();
+    c.strokeStyle = 'rgba(242,194,91,.5)'; c.lineWidth = 2; c.stroke();
+    c.translate(x, y); c.rotate(ang); c.scale(sc, sc);
+    /* cuff */
+    c.fillStyle = '#e0a93a'; rr(c, -30, -15, 12, 30, 4); c.fill();
+    /* glove: palm, fingers, thumb */
+    var gl = c.createLinearGradient(0, -16, 0, 16); gl.addColorStop(0, '#e2a868'); gl.addColorStop(1, '#a8682e');
+    c.fillStyle = gl; c.strokeStyle = '#6b3f16'; c.lineWidth = 1.5;
+    rr(c, -20, -14, 26, 28, 9); c.fill(); c.stroke();
+    [-10, -3.5, 3, 9.5].forEach(function (fy, i) { rr(c, 2, fy - 3.2, 18 - Math.abs(i - 1.5) * 2.5, 6.4, 3.2); c.fill(); c.stroke(); });
+    c.save(); c.translate(-6, -13); c.rotate(-.6); rr(c, 0, -3.5, 14, 7, 3.5); c.fill(); c.stroke(); c.restore();
+    /* honey held in the fingers */
+    if (blob > 0) { var bg = c.createRadialGradient(14, 0, 1, 14, 0, 11 * blob); bg.addColorStop(0, '#ffe08a'); bg.addColorStop(1, '#d98b12'); c.fillStyle = bg; c.beginPath(); c.ellipse(16, 0, 10 * blob, 8 * blob, 0, 0, 6.3); c.fill(); }
+    c.restore();
+  }
+  function stepHarvest(c, t, now) {
+    if (!comb.cells.length) return;
+    if (!harvest) {
+      if (now - lastHarvest < 9000 || beeRun || mode !== 'atrium' || document.body.classList.contains('ch-open')) return;
+      var g = shelfGeo(), best = null, bd = 1e9;
+      for (var i = 0; i < comb.built; i++) { var k = comb.cells[i]; if (k.fill < 1 || k.pend > 0 || Math.sin(k.a) < .05) continue; var p = cellPx(k); if (p[0] < 20 || p[0] > vw - 20) continue; var d = Math.hypot(p[0] - g.x, p[1] - g.y); if (d < bd) { bd = d; best = k; } }
+      var full = comb.cells.filter(function (k) { return k.fill >= 1; }).length;
+      if (!best || full < 4) { lastHarvest = now - 6000; return; }
+      var slots = jarSlots(), jar = slots.filter(function (j) { return j.cur; })[0] || slots[slots.length - 1];
+      harvest = { t0: now, cell: best, jar: jar, ax: Math.min(vw + 60, g.x + g.w * .6), ay: vh + 80, poured: false };
+    }
+    var h = harvest, T = (now - h.t0) / 1000, cp = cellPx(h.cell), jx = h.jar.x, jy = h.jar.y - shelfGeo().jh - 46, sc = Math.max(.6, Math.min(1.1, vw / 1300 + .35));
+    var start = [h.ax - 40, vh + 60], x, y, ang, blob = 0;
+    function lerp(a, b, k) { return a + (b - a) * k; }
+    function e(k) { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); }
+    if (T < 1) { var k1 = e(T); x = lerp(start[0], cp[0] + 6, k1); y = lerp(start[1], cp[1] + 18, k1); ang = -Math.PI / 2 - .5; }
+    else if (T < 1.5) { x = cp[0] + 6; y = cp[1] + 18; ang = -Math.PI / 2 - .5; var k2 = e((T - 1) / .5); h.cell.fill = 1 - k2; blob = k2; }
+    else if (T < 2.6) { var k3 = e((T - 1.5) / 1.1); x = lerp(cp[0] + 6, jx + 26, k3); y = lerp(cp[1] + 18, jy, k3) - Math.sin(k3 * Math.PI) * 40; ang = -Math.PI / 2 - .5 + k3 * .2; blob = 1; h.cell.fill = 0; }
+    else if (T < 3.8) { var k4 = (T - 2.6) / 1.2; x = jx + 26; y = jy; ang = lerp(-Math.PI / 2 - .3, -Math.PI * 1.3, e(k4 * 2)); blob = 1 - e(k4);
+      /* honey stream into the jar */
+      var sx = x + Math.cos(ang) * 16 * sc, sy = y + Math.sin(ang) * 16 * sc; c.strokeStyle = 'rgba(255,196,70,' + (1 - k4 * .6).toFixed(2) + ')'; c.lineWidth = 4 * (1 - k4) + 1; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(sx, sy); c.quadraticCurveTo(sx - 4, (sy + h.jar.y - 20) / 2, jx, h.jar.y - shelfGeo().jh * .5); c.stroke();
+      if (!h.poured && k4 > .7) { h.poured = true; jars.cells++; try { localStorage.setItem('obwJars', String(jars.cells)); } catch (er) {} saveComb(); } }
+    else if (T < 4.8) { var k5 = e((T - 3.8) / 1); x = lerp(jx + 26, start[0] + 80, k5); y = lerp(jy, start[1] + 40, k5); ang = -Math.PI / 2; }
+    else { harvest = null; lastHarvest = now; return; }
+    drawHand(c, x, y, ang, sc, blob, h.ax, h.ay);
   }
   function saveComb() { var n = comb.cells.filter(function (k) { return k.fill >= 1; }).length; try { localStorage.setItem('obwComb', String(n)); } catch (e) {} }
 
