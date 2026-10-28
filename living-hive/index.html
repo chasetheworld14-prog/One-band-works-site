@@ -31,6 +31,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 #stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 #atriumCv { opacity: 0; transition: opacity .7s; }
 body.in-atrium #atriumCv { opacity: 1; }
+#combFx { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; }
 #beeFx { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 11; pointer-events: none; display: none; }
 body.bee-fly #beeFx { display: block; }
 body.bee-fly .atrium, body.bee-fly .dock { pointer-events: none; }
@@ -200,7 +201,8 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
   .pill { padding: 0 13px; font-size: .78rem; }
   #tourBtn span, #menuBtn span { display: none; }
   #sndBtn { padding: 0 10px; }
-  .brand b, .brand i { white-space: nowrap; } .top { gap: 6px; } .top .pill { padding: 0 11px; }
+  .brand i { display: none; } .brand b { font-size: .74rem; line-height: 1.2; max-width: 6.6em; } .brand img { width: 34px; height: 34px; } .brand { gap: 8px; padding: 2px; }
+  .top { gap: 6px; padding-left: 10px; padding-right: 10px; } .top .pill { padding: 0 10px; } .tbtns { gap: 6px !important; flex-wrap: nowrap; }
   .caption { font-size: .88rem; }
 }
 @media (prefers-reduced-motion: reduce) { .hot .ring { animation: none; } .door { animation: none; } }
@@ -211,6 +213,7 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
   <canvas id="worldCv"></canvas>
   <canvas id="atriumCv"></canvas>
   <canvas id="beeFx" aria-hidden="true"></canvas>
+  <canvas id="combFx" aria-hidden="true"></canvas>
   <div id="flash"></div>
 </div>
 
@@ -274,7 +277,7 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
     <a href="#/story" data-r="story"><i></i>Our story: O.N.E. + B.A.N.D.</a>
     <h4>Talk</h4>
     <a href="#/contact" data-r="contact"><i></i>Talk to the Hive</a>
-    <p style="opacity:.5;font-size:.7rem;margin-top:18px">Version 2.3 · bee flight + sound</p>
+    <p style="opacity:.5;font-size:.7rem;margin-top:18px">Version 2.5 · worker bees + zen hum</p>
   </nav>
 </div>
 
@@ -560,6 +563,7 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
     }
     if (mode === 'world' || anim) drawWorld(t);
     if (mode === 'atrium') { drawAtrium(t); if (!reduce && now - lastTilt > 2500) { cworld.style.setProperty('--ry', (Math.sin(t * .5) * 10).toFixed(2) + 'deg'); cworld.style.setProperty('--rx', (14 + Math.cos(t * .4) * 4).toFixed(2) + 'deg'); } }
+    combStep(now);
     placeHotspots();
     requestAnimationFrame(frame);
   }
@@ -760,6 +764,78 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
   menu.addEventListener('click', function (e) { if (e.target === menu) closeMenu(); var a = e.target.closest('a[data-r]'); if (a) { stopTour(); closeMenu(); } });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { if (menu.classList.contains('open')) closeMenu(); else if (openId) go('atrium'); } });
 
+  /* ---------- worker bees: honey keeps flowing in, a comb grows from the corners as you explore ---------- */
+  var combCv = $('combFx'), cctx = combCv.getContext('2d'), comb = { cells: [], workers: [], saved: 0, lastNew: 0 };
+  try { comb.saved = Math.max(0, parseInt(localStorage.getItem('obwComb') || '0', 10) || 0); } catch (e) {}
+  (function buildOrder() {
+    /* axial hex coords around each bottom corner, ordered from the corner outward */
+    var list = [];
+    [0, 1].forEach(function (side) {
+      for (var q = -9; q <= 9; q++) for (var r = -9; r <= 9; r++) {
+        var x = Math.sqrt(3) * (q + r / 2), y = 1.5 * r;
+        if (side ? x > .9 : x < -.9) continue; if (y > 1) continue;
+        var d = Math.hypot(x, y); if (d > 10.5) continue;
+        list.push({ side: side, ax: x, ay: y, d: d + Math.random() * .8, build: 0, fill: 0, born: 0 });
+      }
+    });
+    list.sort(function (a, b) { return a.d - b.d; });
+    comb.order = list;
+  })();
+  function combR() { return Math.max(11, Math.min(18, Math.min(vw, vh) / 34)); }
+  function cellXY(c) { var R = combR(); return [c.side ? vw - 8 + c.ax * R : 8 + c.ax * R, vh - 6 + c.ay * R]; }
+  function addCell(instant) {
+    var c = comb.order[comb.cells.length]; if (!c) return null;
+    c.build = instant ? 1 : 0; c.fill = instant ? 1 : 0; c.born = performance.now(); comb.cells.push(c); return c;
+  }
+  for (var si = 0; si < Math.min(comb.saved, comb.order.length); si++) addCell(true);
+  function nextTarget() { for (var i = 0; i < comb.cells.length; i++) { var c = comb.cells[i]; if (c.fill + (c.pending || 0) < 1 && c.build >= 1) return c; } return null; }
+  function spawnWorker(now) {
+    var tgt = nextTarget(); if (!tgt) return;
+    tgt.pending = (tgt.pending || 0) + .34;
+    var from = Math.random(), sx = from < .5 ? (tgt.side ? vw + 30 : -30) : Math.random() * vw, sy = from < .5 ? vh * (.35 + Math.random() * .4) : -30;
+    comb.workers.push({ sx: sx, sy: sy, tgt: tgt, t0: now, dur: 3800 + Math.random() * 2200, ph: Math.random() * 6, ex: tgt.side ? vw * .55 : vw * .45, ey: -40 });
+  }
+  function hexAt(c, x, y, R) { c.beginPath(); for (var i = 0; i < 6; i++) { var a = Math.PI / 6 + i * Math.PI / 3; c[i ? 'lineTo' : 'moveTo'](x + R * Math.cos(a), y + R * Math.sin(a)); } c.closePath(); }
+  function combStep(now) {
+    var c = cctx, R = combR(), t = now / 1000;
+    c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, vw, vh);
+    /* grow: a new wax cell every few seconds while the newest ones are filling */
+    var unfilled = comb.cells.filter(function (k) { return k.fill < 1; }).length;
+    if (now - comb.lastNew > 3500 && unfilled < 4) { comb.lastNew = now; addCell(false); }
+    if (comb.workers.length < 4 && Math.random() < .02) spawnWorker(now);
+    /* cells */
+    comb.cells.forEach(function (k) {
+      var p = cellXY(k); k.build = Math.min(1, k.build + .012);
+      c.save(); c.globalAlpha = k.fill >= 1 ? 1 : .9;
+      hexAt(c, p[0], p[1], R * .93); c.fillStyle = 'rgba(12,20,80,.55)'; c.fill();
+      if (k.fill > 0) {
+        c.save(); hexAt(c, p[0], p[1], R * .93); c.clip();
+        var lv = p[1] + R - k.fill * 2 * R, hg = c.createLinearGradient(0, lv, 0, p[1] + R); hg.addColorStop(0, '#ffd66e'); hg.addColorStop(1, '#d98b12');
+        c.fillStyle = hg; c.fillRect(p[0] - R, lv + Math.sin(t * 2 + p[0]) * (k.fill < 1 ? 1.2 : 0), 2 * R, 2 * R);
+        if (k.fill >= 1) { c.fillStyle = 'rgba(255,255,255,.18)'; c.beginPath(); c.ellipse(p[0] - R * .3, p[1] - R * .35, R * .28, R * .14, -.5, 0, 6.3); c.fill(); }
+        c.restore();
+      }
+      c.strokeStyle = 'rgba(242,194,91,' + (.35 + .5 * k.build).toFixed(2) + ')'; c.lineWidth = 1.5;
+      c.setLineDash([R * 6 * k.build, R * 6]); hexAt(c, p[0], p[1], R * .93); c.stroke(); c.setLineDash([]);
+      c.restore();
+    });
+    /* workers: fly in carrying honey, hover and drip it in, fly away */
+    comb.workers = comb.workers.filter(function (w) {
+      var k = (now - w.t0) / w.dur, p = cellXY(w.tgt), x, y, carrying = k < .5;
+      if (k < .45) { var e = k / .45, ee = e * e * (3 - 2 * e); x = w.sx + (p[0] - w.sx) * ee + Math.sin(t * 3 + w.ph) * 18 * (1 - e); y = w.sy + (p[1] - R * 1.4 - w.sy) * ee + Math.cos(t * 4 + w.ph) * 12 * (1 - e); }
+      else if (k < .62) { x = p[0] + Math.sin(t * 9) * 3; y = p[1] - R * 1.4 + Math.sin(t * 11) * 2;
+        if (!w.dropped && k > .52) { w.dropped = true; w.tgt.drip = now; } }
+      else { var e2 = (k - .62) / .38; x = p[0] + (w.ex - p[0]) * e2 * e2; y = p[1] - R * 1.4 + (w.ey - p[1]) * e2 * e2; }
+      if (w.dropped && !w.done) { var dk = (now - w.tgt.drip) / 500; if (dk >= 1) { w.done = true; w.tgt.fill = Math.min(1, w.tgt.fill + .34); w.tgt.pending = Math.max(0, (w.tgt.pending || 0) - .34); if (w.tgt.fill >= 1) saveComb(); }
+        else { c.fillStyle = '#ffc93d'; c.beginPath(); c.arc(p[0], p[1] - R * 1.2 + dk * R * 1.1, 2.4, 0, 6.3); c.fill(); } }
+      drawBee(c, x, y, 6, t + w.ph);
+      if (carrying) { c.fillStyle = '#ffc93d'; c.beginPath(); c.arc(x, y + 7, 2.6, 0, 6.3); c.fill(); }
+      if (k >= 1 && !w.done) { w.tgt.pending = Math.max(0, (w.tgt.pending || 0) - .34); }
+      return k < 1;
+    });
+  }
+  function saveComb() { var n = comb.cells.filter(function (k) { return k.fill >= 1; }).length; try { localStorage.setItem('obwComb', String(n)); } catch (e) {} }
+
   /* ---------- sound: bee hum, bird chirps, close-up buzz (all synthesized, no files) ---------- */
   var snd = { on: false, ctx: null };
   try { snd.want = localStorage.getItem('obwSound') === '1'; } catch (e) { snd.want = false; }
@@ -768,14 +844,21 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
     var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
     var a = snd.ctx = new AC();
     snd.master = a.createGain(); snd.master.gain.value = 0; snd.master.connect(a.destination);
-    /* hive hum: two detuned saws through a band-pass, with a wing-beat flutter */
+    /* hive hum: a meditation chord of bees humming in unison (Om root, fifth, octave, third, high fifth), breathing slowly */
     snd.hum = a.createGain(); snd.hum.gain.value = 0;
-    var bp = a.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 420; bp.Q.value = 1.2;
-    snd.oscs = [188, 196, 251].map(function (f) { var o = a.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.connect(bp); o.start(); return o; });
-    var vib = a.createOscillator(), vibG = a.createGain(); vib.frequency.value = 6.5; vibG.gain.value = 5; vib.connect(vibG); snd.oscs.forEach(function (o) { vibG.connect(o.frequency); }); vib.start();
-    var flut = a.createOscillator(), flutG = a.createGain(), am = a.createGain(); flut.frequency.value = 23; flutG.gain.value = .25; am.gain.value = .75; flut.connect(flutG); flutG.connect(am.gain); flut.start();
-    bp.connect(am); am.connect(snd.hum); snd.hum.connect(snd.master);
-    snd.bp = bp;
+    var lp = a.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900; lp.Q.value = .4; lp.connect(snd.hum);
+    snd.bp = lp; snd.base = [136.1, 204.15, 272.2, 340.25, 408.3]; var lvl = [.34, .22, .18, .09, .06];
+    snd.oscs = snd.base.map(function (f, i) {
+      var o = a.createOscillator(), g = a.createGain(), sw = a.createOscillator(), swG = a.createGain();
+      o.type = i ? 'sine' : 'triangle'; o.frequency.value = f; o.detune.value = (Math.random() - .5) * 6;
+      g.gain.value = lvl[i]; sw.frequency.value = .05 + Math.random() * .07; swG.gain.value = lvl[i] * .45; sw.connect(swG); swG.connect(g.gain); sw.start();
+      o.connect(g); g.connect(lp); o.start(); return o;
+    });
+    /* soft wing shimmer: tiny vibrato shared by every voice, so they move together */
+    var vib = a.createOscillator(), vibG = a.createGain(); vib.frequency.value = 5.2; vibG.gain.value = 3; vib.connect(vibG); snd.oscs.forEach(function (o) { vibG.connect(o.detune); }); vib.start();
+    /* the whole chord breathes in and out about every 10 seconds */
+    var br = a.createOscillator(), brG = a.createGain(), breath = a.createGain(); br.frequency.value = .1; brG.gain.value = .3; breath.gain.value = .7; br.connect(brG); brG.connect(breath.gain); br.start();
+    snd.hum.disconnect(); snd.hum.connect(breath); breath.connect(snd.master);
     /* birds bus */
     snd.birds = a.createGain(); snd.birds.gain.value = 0; snd.birds.connect(snd.master);
     birdLoop();
@@ -799,15 +882,15 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
     if (!snd.ctx) return;
     var t = snd.ctx.currentTime, world = mode === 'world';
     snd.master.gain.setTargetAtTime(snd.on ? 1 : 0, t, .25);
-    if (!beeRun) { snd.hum.gain.setTargetAtTime(world ? .035 : .055, t, .5); snd.bp.frequency.setTargetAtTime(420, t, .3); snd.oscs.forEach(function (o, i) { o.frequency.setTargetAtTime([188, 196, 251][i], t, .3); }); }
+    if (!beeRun) { snd.hum.gain.setTargetAtTime(world ? .16 : .22, t, .8); snd.bp.frequency.setTargetAtTime(world ? 800 : 1000, t, .5); snd.oscs.forEach(function (o, i) { o.frequency.setTargetAtTime(snd.base[i], t, .4); }); }
     snd.birds.gain.setTargetAtTime(world ? 1 : .0, t, .6);
   }
   function sndBee(near) { /* near: 0 far .. 1 right in your face */
     if (!snd.ctx || !snd.on) return;
-    var t = snd.ctx.currentTime, f = 1 + near * .35;
-    snd.hum.gain.setTargetAtTime(.05 + near * .22, t, .05);
-    snd.bp.frequency.setTargetAtTime(420 + near * 700, t, .05);
-    snd.oscs.forEach(function (o, i) { o.frequency.setTargetAtTime([188, 196, 251][i] * f, t, .05); });
+    var t = snd.ctx.currentTime, f = 1 + near * .12;
+    snd.hum.gain.setTargetAtTime(.22 + near * .3, t, .08);
+    snd.bp.frequency.setTargetAtTime(1000 + near * 1800, t, .08);
+    snd.oscs.forEach(function (o, i) { o.frequency.setTargetAtTime(snd.base[i] * f, t, .08); });
   }
   function sndSet(on) {
     snd.on = on; if (on) { sndInit(); if (snd.ctx && snd.ctx.state !== 'running') snd.ctx.resume(); }
@@ -903,7 +986,7 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
   function resize() {
     vw = window.innerWidth; vh = window.innerHeight;
     dpr = Math.min(2, window.devicePixelRatio || 1);
-    [worldCv, atrCv, $('beeFx')].forEach(function (cv) { cv.width = Math.round(vw * dpr); cv.height = Math.round(vh * dpr); });
+    [worldCv, atrCv, $('beeFx'), $('combFx')].forEach(function (cv) { cv.width = Math.round(vw * dpr); cv.height = Math.round(vh * dpr); });
     var q = vw > 900 ? 1.5 : 1;
     if (q !== LQ || !layer.width) { LQ = q; paintWorld(); }
     paintAtriumBase();
