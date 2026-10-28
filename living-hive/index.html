@@ -275,7 +275,7 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
     <a href="#/story" data-r="story"><i></i>Our story: O.N.E. + B.A.N.D.</a>
     <h4>Talk</h4>
     <a href="#/contact" data-r="contact"><i></i>Talk to the Hive</a>
-    <p style="opacity:.5;font-size:.7rem;margin-top:18px">Version 2.6 · ring riders build the comb</p>
+    <p style="opacity:.5;font-size:.7rem;margin-top:18px">Version 3.0 · painted artwork</p>
   </nav>
 </div>
 
@@ -386,6 +386,16 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
   var layer = document.createElement('canvas'), lctx = layer.getContext('2d');
   var LQ = 1, icon = new Image(), iconReady = false;
   var vw = 0, vh = 0, dpr = 1;
+  /* painted artwork: when it loads, it replaces the drawn scenes (drawn versions stay as the fallback) */
+  var ART = { ok: false, img: {} }, ART_FILES = { aerial: 'art/aerial.jpg', atrWide: 'art/atrium-wide.jpg', atrTall: 'art/atrium-tall.jpg', bee: 'art/bee0.png', rim: 'art/rim.png' }, artLeft = 0;
+  /* where the aerial painting sits in world units: portal arch centered on HX, its threshold on PORTAL_Y */
+  var AER = { k: 1.1, ox: 1350 - 1248 * 1.1, oy: 1040 - 708 * 1.1, w: 2394 * 1.1, h: 994 * 1.1 };
+  Object.keys(ART_FILES).forEach(function (key) {
+    var im = new Image(); artLeft++;
+    im.onload = function () { ART.img[key] = im; if (--artLeft === 0) { ART.ok = true; if (vw) { paintWorld(); paintAtriumBase(); var ac = aerialCam(); if (scene === 'aerial' && !anim && mode === 'world') { cam.x = ac.x; cam.y = ac.y; cam.z = ac.z; } } } };
+    im.onerror = function () { artLeft = -99; };
+    im.src = ART_FILES[key];
+  });
 
   function rng(seed) { return function () { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }; }
   function hexPath(c, x, y, r) { c.beginPath(); for (var k = 0; k < 6; k++) { var a = Math.PI / 180 * (60 * k - 90); var px = x + r * Math.cos(a), py = y + r * Math.sin(a); if (k) c.lineTo(px, py); else c.moveTo(px, py); } c.closePath(); }
@@ -401,6 +411,15 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
   function paintWorld() {
     layer.width = W * LQ; layer.height = H * LQ;
     var c = lctx; c.setTransform(LQ, 0, 0, LQ, 0, 0);
+    if (ART.ok) {
+      var sky = c.createLinearGradient(0, 0, 0, AER.oy + 4); sky.addColorStop(0, '#030722'); sky.addColorStop(1, '#0a1a6a'); c.fillStyle = sky; c.fillRect(0, 0, W, AER.oy + 4);
+      c.drawImage(ART.img.aerial, AER.ox, AER.oy, AER.w, AER.h);
+      var by = AER.oy + AER.h - 2, im = ART.img.aerial;
+      c.drawImage(im, 0, im.height - 30, im.width, 30, AER.ox, by, AER.w, H - by + 4);
+      var fade = c.createLinearGradient(0, by, 0, H); fade.addColorStop(0, 'rgba(5,10,46,0)'); fade.addColorStop(1, 'rgba(5,10,46,.85)'); c.fillStyle = fade; c.fillRect(0, by, W, H - by);
+      domeCells = []; castleWin = [];
+      return;
+    }
     /* sky */
     var g = c.createLinearGradient(0, 0, 0, 1060);
     g.addColorStop(0, '#040828'); g.addColorStop(.35, '#13277f'); g.addColorStop(.62, '#3b3fb0'); g.addColorStop(.8, '#8a56c8'); g.addColorStop(.93, '#e7a36a'); g.addColorStop(1, '#f6cf7a');
@@ -489,6 +508,14 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
     atrBase.width = Math.round(vw * dpr); atrBase.height = Math.round(vh * dpr);
     var c = abctx; c.setTransform(dpr, 0, 0, dpr, 0, 0);
     var cx = vw / 2, cy = vh * .42, S = Math.min(vw, vh * 1.1);
+    if (ART.ok) {
+      var aim = vw / vh < 1.2 ? ART.img.atrTall : ART.img.atrWide, sc = Math.max(vw / aim.width, vh / aim.height), iw = aim.width * sc, ih = aim.height * sc;
+      c.drawImage(aim, (vw - iw) / 2, (vh - ih) / 2, iw, ih);
+      var dk = c.createRadialGradient(cx, cy, S * .1, cx, cy, Math.max(vw, vh) * .7); dk.addColorStop(0, 'rgba(4,8,40,.25)'); dk.addColorStop(1, 'rgba(4,8,40,.55)'); c.fillStyle = dk; c.fillRect(0, 0, vw, vh);
+      for (var L2 = 0; L2 < 3; L2++) { var g2 = ringGeo(L2);
+        c.beginPath(); c.ellipse(cx, g2.ey, g2.rx, g2.ry, 0, 0, 6.3); c.strokeStyle = 'rgba(255,214,120,.8)'; c.lineWidth = 2.5; c.shadowColor = 'rgba(255,200,90,.9)'; c.shadowBlur = 10; c.stroke(); c.shadowBlur = 0; }
+      return;
+    }
     var bg = c.createRadialGradient(cx, cy, 10, cx, cy, Math.max(vw, vh) * .8); bg.addColorStop(0, '#3a2aa8'); bg.addColorStop(.45, '#14267a'); bg.addColorStop(1, '#040828');
     c.fillStyle = bg; c.fillRect(0, 0, vw, vh);
     /* wall honeycomb */
@@ -522,7 +549,12 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
   };
   var cam = { x: CAMS.aerial.x, y: CAMS.aerial.y, z: CAMS.aerial.z }, anim = null;
   function fit() { return Math.min(vw / 1150, vh / 950); }
-  function aerialCam() { var z = CAMS.aerial.z, s = fit() * z, portrait = vh > vw * 1.1; return { x: portrait ? CAMS.aerial.x : HX - (vw * .2) / s, y: portrait ? 760 + (vh * .02) / s : CAMS.aerial.y, z: z }; }
+  function aerialCam() {
+    var portrait = vh > vw * 1.1;
+    if (ART.ok) { var z2 = Math.max(CAMS.aerial.z, vh / (AER.h * (portrait ? 1.3 : .98)) / fit()), s2 = fit() * z2, half = vw / 2 / s2;
+      return { x: portrait ? HX : Math.min(HX - (vw * .16) / s2, AER.ox + AER.w - half), y: AER.oy + AER.h * (portrait ? .5 : .5), z: z2 }; }
+    var z = CAMS.aerial.z, s = fit() * z; return { x: portrait ? CAMS.aerial.x : HX - (vw * .2) / s, y: portrait ? 760 + (vh * .02) / s : CAMS.aerial.y, z: z };
+  }
   function flyTo(t, ms, done) {
     if (reduce || ms === 0) { cam.x = t.x; cam.y = t.y; cam.z = t.z; anim = null; if (done) done(); return; }
     anim = { from: { x: cam.x, y: cam.y, z: cam.z }, to: t, t0: performance.now(), ms: ms, done: done };
@@ -535,7 +567,9 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
   for (var bi = 0; bi < 18; bi++) bees.push({ a: Math.random() * 6.3, r: 320 + Math.random() * 260, sp: (.004 + Math.random() * .006) * (Math.random() < .5 ? -1 : 1), y: 640 + Math.random() * 360, bob: Math.random() * 6 });
   var abees = [];
   for (var bj = 0; bj < 6; bj++) abees.push({ x: Math.random(), y: Math.random(), vx: (Math.random() - .5) * .002, vy: (Math.random() - .5) * .0015, ph: Math.random() * 6 });
-  function drawBee(c, x, y, s, t) {
+  function drawBee(c, x, y, s, t, dir) {
+    if (ART.ok) { var im = ART.img.bee, bw = s * 3.6, bh = bw * im.height / im.width, sq = 1 + Math.sin(t * 40) * .04;
+      c.save(); c.translate(x, y); if (dir < 0) c.scale(-1, 1); c.scale(1, sq); c.drawImage(im, -bw / 2, -bh / 2, bw, bh); c.restore(); return; }
     c.save(); c.translate(x, y);
     c.fillStyle = 'rgba(230,240,255,.6)'; var flap = Math.abs(Math.sin(t * 40)) * .8 + .2;
     c.beginPath(); c.ellipse(-s * .5, -s * .7, s * .55, s * .35 * flap, -.5, 0, 6.3); c.ellipse(s * .5, -s * .7, s * .55, s * .35 * flap, .5, 0, 6.3); c.fill();
@@ -577,6 +611,7 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
     if (left < 0) { c.fillStyle = '#0a1046'; c.fillRect(left - 10, 0, -left + 10, H); }
     if (cam.x + vw / 2 / s > W) { c.fillStyle = '#0a1046'; c.fillRect(W, 0, cam.x + vw / 2 / s - W + 10, H); }
     c.drawImage(layer, 0, 0, W, H);
+    if (ART.ok) { drawArtWorld(c, t); c.restore(); return; }
     /* waterfall motion */
     c.globalAlpha = .55; c.fillStyle = '#ffffff';
     [[350, 480, 46], [520, 470, 30], [2120, 510, 40], [2240, 470, 26]].forEach(function (f, i) {
@@ -599,6 +634,15 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
     bees.forEach(function (b) { b.a += b.sp; var bx = HX + Math.cos(b.a) * b.r, by = b.y + Math.sin(b.a) * 60 + Math.sin(t * 3 + b.bob) * 10; drawBee(c, bx, by, 9, t + b.bob); });
     c.restore();
   }
+  function drawArtWorld(c, t) {
+    /* soft portal breathing and a little sparkle on the water, then the bees */
+    var py = AER.oy + 560 * AER.k, pr = c.createRadialGradient(HX, py, 5, HX, py, 120 + 16 * Math.sin(t * 2));
+    pr.addColorStop(0, 'rgba(255,255,255,.35)'); pr.addColorStop(1, 'rgba(155,92,255,0)'); c.fillStyle = pr; c.beginPath(); c.arc(HX, py, 140, 0, 6.3); c.fill();
+    c.fillStyle = 'rgba(255,240,200,.5)';
+    for (var m = 0; m < 26; m++) { var sx = (m * 397 + t * 18 * (m % 2 ? 1 : -1)) % 2400, sy = AER.oy + (740 + (m * 53) % 230) * AER.k; if (Math.abs(sx - HX) < 260) continue; var a = .5 + .5 * Math.sin(t * 3 + m); c.globalAlpha = a * .7; c.fillRect(sx, sy, 10 + m % 4 * 6, 2); }
+    c.globalAlpha = 1;
+    bees.forEach(function (b) { b.a += b.sp; var bx = HX + Math.cos(b.a) * b.r, by = AER.oy + 420 * AER.k + (b.y - 800) * .8 + Math.sin(b.a) * 60 + Math.sin(t * 3 + b.bob) * 10; drawBee(c, bx, by, 10, t + b.bob, -Math.sin(b.a) * b.sp > 0 ? 1 : -1); });
+  }
   function drawAtrium(t) {
     var c = actx; c.setTransform(1, 0, 0, 1, 0, 0);
     c.drawImage(atrBase, 0, 0);
@@ -611,7 +655,7 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
     /* floating emblem */
     /* inner waterfall motion */
     c.fillStyle = 'rgba(255,255,255,.4)';
-    [-1, 1].forEach(function (sd) { var x0 = cx + sd * S * .58; for (var j = 0; j < 6; j++) { var yy = cy - S * .32 + ((t * 160 + j * 60) % (S * .74)); c.fillRect(x0 - 6 + j * 2, yy, 2, 18); } });
+    if (!ART.ok) [-1, 1].forEach(function (sd) { var x0 = cx + sd * S * .58; for (var j = 0; j < 6; j++) { var yy = cy - S * .32 + ((t * 160 + j * 60) % (S * .74)); c.fillRect(x0 - 6 + j * 2, yy, 2, 18); } });
     drawRingComb(c, t, performance.now());
     abees.forEach(function (b) { b.x += b.vx; b.y += b.vy; if (b.x < .05 || b.x > .95) b.vx *= -1; if (b.y < .12 || b.y > .85) b.vy *= -1; drawBee(c, b.x * vw, b.y * vh + Math.sin(t * 3 + b.ph) * 6, 6, t + b.ph); });
   }
@@ -825,7 +869,8 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
         if (k.fill >= 1) { c.fillStyle = 'rgba(255,255,255,.28)'; c.beginPath(); c.ellipse(p[0] - R * .28, p[1] - R * .35, R * .3, R * .13, -.5, 0, 6.3); c.fill(); }
         c.restore();
       }
-      c.strokeStyle = 'rgba(255,214,120,.85)'; c.lineWidth = Math.max(1, R * .12); hexPath(c, p[0], p[1], R * .95); c.stroke();
+      if (ART.ok) { var rw = Math.sqrt(3) * R * 1.02, rh = 2 * R * 1.02; c.drawImage(ART.img.rim, p[0] - rw / 2, p[1] - rh / 2, rw, rh); }
+      else { c.strokeStyle = 'rgba(255,214,120,.85)'; c.lineWidth = Math.max(1, R * .12); hexPath(c, p[0], p[1], R * .95); c.stroke(); }
       c.restore();
     });
     /* riders: bees circling each ring; the ones carrying honey stop at the open cell and drip it in */
@@ -842,7 +887,7 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
       var a = ring.at(b.u), p = ringPt(ring.g, a), sc = .72 + .38 * Math.sin(a), hover = b.stop > 0;
       var bx = p[0] + (hover ? Math.sin(t * 9) * 2 : 0), by = p[1] - comb.R * sc * (hover && b.tgt && b.tgt.row ? 3.4 : 2) + Math.sin(t * 4 + b.ph) * 2.5;
       if (hover && b.tgt) { var tp = cellPx(b.tgt), dk = 1 - b.stop / .9; c.fillStyle = '#ffc93d'; c.beginPath(); c.arc(tp[0], by + 6 + (tp[1] - by - 6) * dk, 2.2 * sc + .5, 0, 6.3); c.fill(); }
-      c.save(); c.globalAlpha = Math.sin(a) < 0 ? .6 : 1; drawBee(c, bx, by, 7.5 * sc, t + b.ph);
+      c.save(); c.globalAlpha = Math.sin(a) < 0 ? .6 : 1; drawBee(c, bx, by, 7.5 * sc, t + b.ph, -Math.sin(a) * b.sp > 0 ? 1 : -1);
       if (b.cargo && !hover) { c.fillStyle = '#ffc93d'; c.beginPath(); c.arc(bx, by + 8 * sc, 2.6 * sc, 0, 6.3); c.fill(); }
       c.restore();
     });
@@ -918,6 +963,11 @@ body.ch-open .atrium, body.ch-open .dock { visibility: hidden; }
   /* ---------- bee flight: tap a comb cell, a bee carries you in ---------- */
   var beeCv = $('beeFx'), bctx = beeCv.getContext('2d'), beeRun = null;
   function drawBigBee(c, x, y, s, t, ang) {
+    if (ART.ok) { var im = ART.img.bee, bw = s * 3.6, bh = bw * im.height / im.width, flip = Math.cos(ang) < 0 && ang > -1.5;
+      c.save(); c.translate(x, y);
+      var gl = c.createRadialGradient(0, 0, s * .2, 0, 0, s * 2.4); gl.addColorStop(0, 'rgba(255,214,110,.3)'); gl.addColorStop(1, 'rgba(255,214,110,0)'); c.fillStyle = gl; c.beginPath(); c.arc(0, 0, s * 2.4, 0, 6.3); c.fill();
+      if (flip) { c.scale(-1, 1); c.rotate(Math.PI - ang); } else c.rotate(ang < -1.5 ? 0 : ang);
+      c.scale(1, 1 + Math.sin(t * 40) * .03); c.drawImage(im, -bw / 2, -bh / 2, bw, bh); c.restore(); return; }
     c.save(); c.translate(x, y); c.rotate(ang);
     var flap = Math.sin(t * 55);
     /* glow */
