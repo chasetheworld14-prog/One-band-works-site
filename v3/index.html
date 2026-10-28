@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+</head>
+<body>
+<title>One Band Works</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="One Band Works LLC, Jonesboro, Georgia. People, systems, technology, and opportunity. Systems that flow to grow.">
+<link rel="icon" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;1,500;1,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: the Hive at dusk. A painted mountain-and-castle valley behind a cluster of gold-rimmed hex cells:
+   the logo in the big center cell, the four pillars around it. Each pillar opens its own sub-hive below. One committed dark look. */
+:root {
+  --bg: #070a22;
+  --bg-2: #0d1236;
+  --panel: #121a48;
+  --cell: #172268;
+  --line: #2a3577;
+  --ink: #f1f2fa;
+  --muted: #a7aed0;
+  --purple: #9b5cff;
+  --purple-deep: #3a1880;
+  --gold: #f2c25b;
+  --gold-deep: #b9832a;
+  --silver: #c8cddb;
+  --display: "Montserrat", "Segoe UI", Arial, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", Roboto, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --flat: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.6; overflow-x: hidden; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--display); line-height: 1.1; text-wrap: balance; margin: 0; }
+h2 { font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 800; }
+h3 { font-size: 1.15rem; font-weight: 700; }
+p { margin: 0; }
+a { color: var(--gold); }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.eyebrow { font-family: var(--display); font-weight: 600; font-size: .76rem; letter-spacing: .24em; text-transform: uppercase; color: var(--gold); }
+
+/* header */
+header { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: linear-gradient(180deg, rgba(10, 12, 48, .96), rgba(14, 16, 62, .9)); border-bottom: 1px solid rgba(155, 92, 255, .45); backdrop-filter: blur(8px); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--bg); }
+header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 10px 24px; flex-wrap: wrap; padding-block: 12px; }
+.brand { text-decoration: none; color: var(--ink); display: grid; line-height: 1.1; }
+.brand b { font-family: var(--display); font-weight: 800; font-size: 1.25rem; letter-spacing: .02em; }
+.brand i { font-family: var(--display); font-weight: 500; font-size: .85rem; color: var(--silver); }
+nav { display: flex; gap: 4px 22px; flex-wrap: wrap; }
+nav a { font-family: var(--display); font-weight: 600; font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; color: var(--silver); text-decoration: none; padding-block: 6px; border-bottom: 2px solid transparent; }
+nav a:hover, nav a.on { color: var(--ink); border-color: var(--purple); text-shadow: 0 0 12px rgba(155, 92, 255, .8); }
+
+/* hero */
+.hero { position: relative; overflow: hidden; padding-block: clamp(28px, 4vw, 48px) clamp(36px, 5vw, 56px); isolation: isolate; }
+#scene { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; }
+.hero .wrap { display: grid; justify-items: center; text-align: center; gap: 10px; }
+.hero h1 { font-size: clamp(2.3rem, 7.5vw, 5rem); font-weight: 800; letter-spacing: .02em; text-shadow: 0 4px 30px rgba(0, 0, 0, .6); }
+.hero .slogan { font-family: var(--display); font-style: italic; font-weight: 600; font-size: clamp(1.25rem, 3.4vw, 2.3rem); color: var(--purple); text-shadow: 0 0 22px rgba(155, 92, 255, .55); }
+.pillars-line { margin-top: 4px; font-family: var(--display); font-weight: 500; letter-spacing: .28em; font-size: clamp(.68rem, 1.6vw, .92rem); text-transform: uppercase; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; }
+.pillars-line span + span::before { content: "◆"; color: var(--gold); margin-right: 12px; font-size: .7em; vertical-align: .15em; }
+
+/* hex cells with gold rims */
+.cluster { --S: clamp(200px, 21vw, 262px); --C: clamp(250px, 29vw, 360px); margin-top: 22px; display: flex; align-items: center; justify-content: center; }
+.col { display: grid; gap: 14px; position: relative; z-index: 2; }
+.col.left { margin-right: calc(var(--S) * -.16); }
+.col.right { margin-left: calc(var(--S) * -.16); }
+.hx { position: relative; display: block; border: 0; padding: 0; background: none; color: var(--ink); font: inherit; cursor: pointer; filter: drop-shadow(0 0 10px rgba(242, 194, 91, .55)) drop-shadow(0 10px 18px rgba(0, 0, 0, .55)); transition: transform .3s ease, filter .3s ease; }
+.hx .rim, .hx .in { position: absolute; clip-path: var(--flat); }
+.hx .rim { inset: 0; background: linear-gradient(135deg, #fff1c2, var(--gold) 30%, var(--gold-deep) 65%, #ffe39a); }
+.hx .in { inset: 4px; background: var(--fill, linear-gradient(160deg, rgba(36, 52, 150, .92), rgba(16, 22, 80, .92))); display: grid; place-items: center; align-content: center; gap: 6px; padding: 14% 18%; text-align: center; }
+.hx.pillar { width: var(--S); height: calc(var(--S) * .866); }
+.hx.pillar .ic { width: clamp(38px, 4.4vw, 58px); height: auto; stroke: var(--gold); fill: none; stroke-width: 1.6; filter: drop-shadow(0 0 6px rgba(242, 194, 91, .6)); }
+.hx.pillar b { font-family: var(--display); font-weight: 800; letter-spacing: .06em; text-transform: uppercase; font-size: clamp(.95rem, 1.7vw, 1.3rem); text-shadow: 0 2px 8px rgba(0,0,0,.6); }
+.hx.pillar i { font-family: var(--display); font-weight: 500; font-size: clamp(.78rem, 1.2vw, .95rem); line-height: 1.25; color: #e3e6f5; }
+.hx.pillar:hover, .hx.pillar:focus-visible { transform: translateY(-5px) scale(1.03); filter: drop-shadow(0 0 18px rgba(242, 194, 91, .9)) drop-shadow(0 14px 22px rgba(0, 0, 0, .6)); outline: none; }
+.hx.pillar[aria-pressed="true"] { filter: drop-shadow(0 0 22px rgba(242, 194, 91, 1)) drop-shadow(0 0 40px rgba(155, 92, 255, .6)); }
+.hx.pillar[aria-pressed="true"] .rim { background: linear-gradient(135deg, #fff7da, #ffd56e 40%, #ffefb0); }
+.p-people .in { --fill: linear-gradient(165deg, rgba(40, 60, 170, .9), rgba(20, 26, 90, .94)); }
+.p-systems .in { --fill: linear-gradient(165deg, rgba(28, 44, 140, .92), rgba(12, 18, 70, .95)); }
+.p-tech .in { --fill: linear-gradient(165deg, rgba(22, 40, 130, .92), rgba(10, 16, 64, .95)); }
+.p-opp .in { --fill: linear-gradient(165deg, rgba(90, 50, 180, .9), rgba(34, 18, 90, .94)); }
+.hx.core { width: var(--C); height: calc(var(--C) * .866); cursor: default; z-index: 1; filter: drop-shadow(0 0 26px rgba(242, 194, 91, .7)) drop-shadow(0 18px 30px rgba(0, 0, 0, .6)); }
+.hx.core .in { --fill: radial-gradient(circle at 50% 45%, #1d2a86, #0b1040 72%); padding: 8% 20%; }
+.hx.core img { width: 100%; height: auto; border-radius: 50%; display: block; }
+.trace { position: absolute; inset: 4px; clip-path: var(--flat); pointer-events: none; opacity: .28; background:
+  linear-gradient(90deg, transparent 49%, var(--gold) 49% 51%, transparent 51%) 0 0 / 46px 46px,
+  linear-gradient(0deg, transparent 49%, var(--gold) 49% 51%, transparent 51%) 0 0 / 46px 46px;
+  -webkit-mask: radial-gradient(circle at 70% 30%, #000 0 30%, transparent 70%); mask: radial-gradient(circle at 70% 30%, #000 0 30%, transparent 70%); }
+.cta-row { margin-top: 18px; display: grid; justify-items: center; gap: 14px; }
+.go { font-family: var(--display); font-weight: 700; letter-spacing: .2em; text-transform: uppercase; font-size: .95rem; color: var(--ink); text-decoration: none; padding: 14px 34px; border-radius: 999px; background: linear-gradient(180deg, #4a1fa0, #2a0f66); border: 2px solid var(--purple); box-shadow: 0 0 20px rgba(155, 92, 255, .6), inset 0 1px 0 rgba(255,255,255,.2); }
+.go:hover { box-shadow: 0 0 30px rgba(155, 92, 255, .9), inset 0 1px 0 rgba(255,255,255,.25); }
+.more { font-family: var(--display); font-weight: 500; letter-spacing: .3em; text-transform: uppercase; font-size: .78rem; color: var(--silver); text-decoration: none; display: grid; justify-items: center; gap: 4px; }
+.more::before { content: ""; width: 12px; height: 12px; border-right: 2px solid var(--silver); border-bottom: 2px solid var(--silver); transform: rotate(45deg); }
+
+/* switches */
+.switch { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-family: var(--display); font-weight: 600; font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); user-select: none; }
+.switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.switch .track { position: relative; width: 54px; height: 26px; border-radius: 999px; background: var(--bg-2); border: 1px solid var(--line); box-shadow: inset 0 2px 6px rgba(0,0,0,.6); flex: none; }
+.switch .knob { position: absolute; top: 3px; left: 4px; width: 22px; height: 18px; background: var(--silver); clip-path: var(--flat); transition: transform .25s cubic-bezier(.3,1.4,.5,1), background .2s; }
+.switch input:checked + .track { border-color: var(--gold); box-shadow: inset 0 2px 6px rgba(0,0,0,.6), 0 0 10px rgba(242,194,91,.45); }
+.switch input:checked + .track .knob { transform: translateX(24px); background: var(--gold); }
+.switch input:focus-visible + .track { outline: 2px solid var(--gold); outline-offset: 2px; }
+.switch:has(input:checked) { color: var(--ink); }
+.toolbar { display: flex; gap: 18px; flex-wrap: wrap; }
+
+/* sub-hive */
+.sec { padding-block: clamp(44px, 6vw, 76px); }
+.sub-head { display: flex; justify-content: space-between; align-items: end; gap: 18px; flex-wrap: wrap; margin-bottom: 26px; }
+.sub-head p { color: var(--muted); max-width: 36em; margin-top: 8px; }
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.tabs button { font: inherit; font-family: var(--display); font-weight: 600; font-size: .74rem; letter-spacing: .14em; text-transform: uppercase; color: var(--silver); background: var(--bg-2); border: 1px solid var(--line); padding: 8px 14px; border-radius: 999px; cursor: pointer; }
+.tabs button[aria-selected="true"] { color: #1a1206; background: var(--gold); border-color: var(--gold); box-shadow: 0 0 14px rgba(242,194,91,.5); }
+.sub-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 30px; align-items: start; }
+.comb { --sw: clamp(150px, 17vw, 190px); display: grid; grid-template-columns: repeat(3, var(--sw)); gap: 12px 14px; justify-content: center; padding-bottom: calc(var(--sw) * .45); }
+.comb .hx { width: var(--sw); height: calc(var(--sw) * .866); filter: drop-shadow(0 0 6px rgba(242,194,91,.35)); }
+.comb .hx:nth-child(3n+2) { transform: translateY(50%); }
+.comb .hx .in { padding: 12% 16%; gap: 4px; }
+.comb .hx b { font-family: var(--display); font-weight: 700; font-size: .86rem; line-height: 1.2; }
+.comb .hx small { font-family: var(--mono); font-size: .66rem; color: var(--gold); }
+.comb .hx .rim { background: linear-gradient(135deg, #8a6a2a, #5a4420); }
+.comb .hx[aria-pressed="true"] { filter: drop-shadow(0 0 16px rgba(242,194,91,.9)); }
+.comb .hx[aria-pressed="true"] .rim { background: linear-gradient(135deg, #fff1c2, var(--gold) 40%, var(--gold-deep)); }
+.detail { background: linear-gradient(170deg, var(--panel), var(--bg-2)); border: 1px solid rgba(242,194,91,.45); border-radius: 14px; padding: 26px; display: grid; gap: 14px; box-shadow: 0 0 30px rgba(242,194,91,.12); min-width: 0; }
+.detail .cat { font-family: var(--display); font-weight: 600; font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; color: var(--purple); }
+.detail p, .detail ul { color: var(--muted); }
+.detail ul { margin: 0; padding-left: 1.1em; display: grid; gap: 4px; }
+.price { justify-self: start; font-family: var(--mono); font-size: .86rem; color: var(--gold); border: 1px solid var(--gold); border-radius: 6px; padding: 4px 10px; font-variant-numeric: tabular-nums; }
+body.no-prices .price, body.no-prices .comb small { display: none; }
+
+/* about / band */
+.about { border-block: 1px solid var(--line); background: radial-gradient(ellipse at 50% 0, rgba(155,92,255,.16), transparent 60%), var(--bg-2); }
+.about .top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 30px; margin-bottom: 36px; }
+.about .top p { color: var(--muted); }
+.words { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
+.word h3 { font-size: 1.4rem; letter-spacing: .3em; color: var(--purple); margin-bottom: 16px; }
+.word dl { margin: 0; display: grid; gap: 16px; }
+.word dl div { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 14px; align-items: start; }
+.word dt { width: 64px; height: 56px; clip-path: var(--flat); background: linear-gradient(135deg, #fff1c2, var(--gold) 35%, var(--gold-deep)); display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-size: 1.5rem; color: #1a1206; }
+.word dd { margin: 0; color: var(--muted); }
+.word dd strong { display: block; color: var(--ink); font-family: var(--display); font-weight: 700; }
+
+/* solutions + resources */
+.duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 26px; display: grid; gap: 12px; align-content: start; }
+.panel ul { margin: 0; padding-left: 1.1em; color: var(--muted); display: grid; gap: 6px; }
+.panel li strong { color: var(--ink); }
+.panel .price { margin-top: 4px; }
+.terms { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 26px; }
+.terms div { border-top: 2px solid var(--gold); padding-top: 10px; display: grid; gap: 2px; }
+.terms b { font-family: var(--display); font-weight: 700; font-size: .72rem; letter-spacing: .16em; text-transform: uppercase; color: var(--gold); }
+.terms span { color: var(--muted); font-size: .95rem; }
+
+/* contact */
+.contact { border-top: 1px solid var(--line); background: var(--bg-2); }
+.contact .wrap { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 36px; align-items: start; }
+.reach { display: grid; gap: 14px; }
+.reach p { color: var(--muted); }
+.addr { font-family: var(--mono); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; word-break: break-all; }
+.btn { font: inherit; font-weight: 600; cursor: pointer; border: 1px solid var(--gold); color: var(--gold); background: transparent; padding: 6px 12px; border-radius: 6px; }
+form { display: grid; gap: 14px; }
+.f { display: grid; gap: 6px; font-weight: 500; font-size: .95rem; }
+input[type="text"], textarea { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; width: 100%; }
+textarea { min-height: 100px; resize: vertical; }
+.picked { display: flex; flex-wrap: wrap; gap: 8px; min-height: 34px; align-items: center; }
+.chip { font-family: var(--display); font-weight: 600; font-size: .74rem; color: #1a1206; background: var(--gold); padding: 4px 12px; border-radius: 999px; }
+.empty, .note { color: var(--muted); font-size: .9rem; }
+#quote-out { white-space: pre-wrap; font-family: var(--mono); font-size: .84rem; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+.contact .go { justify-self: start; border: 2px solid var(--purple); cursor: pointer; font-size: .85rem; }
+footer { padding-block: 26px; color: var(--muted); font-size: .9rem; border-top: 1px solid var(--line); }
+footer .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+@media (max-width: 900px) {
+  .cluster { flex-wrap: wrap; --S: clamp(140px, 41vw, 230px); --C: clamp(230px, 70vw, 320px); gap: 10px; }
+  .hx.core { order: -1; flex-basis: 100%; max-width: var(--C); margin-inline: calc((100% - var(--C)) / 2); }
+  .col { margin: 0 !important; }
+  .sub-layout, .about .top, .words, .duo, .contact .wrap { grid-template-columns: minmax(0, 1fr); }
+  .terms { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  nav { gap: 2px 14px; }
+  nav a { font-size: .7rem; letter-spacing: .1em; }
+  .comb { grid-template-columns: repeat(2, var(--sw)); --sw: clamp(140px, 42vw, 180px); }
+  .comb .hx:nth-child(3n+2) { transform: none; }
+  .comb .hx:nth-child(even) { transform: translateY(50%); }
+  .hx.pillar .in { padding: 12% 16%; gap: 3px; }
+  .hx.pillar b { font-size: .86rem; letter-spacing: .04em; }
+  .hx.pillar i { font-size: .74rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .hx, .switch .knob { transition: none; }
+}
+</style>
+
+<header>
+  <div class="wrap">
+    <a class="brand" href="#home"><b>ONE BAND WORKS</b><i>Systems that flow to grow.</i></a>
+    <nav aria-label="Main">
+      <a href="#home" class="on">Home</a>
+      <a href="#about">About</a>
+      <a href="#services">Services</a>
+      <a href="#solutions">Solutions</a>
+      <a href="#resources">Resources</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero" id="home">
+    <canvas id="scene" aria-hidden="true"></canvas>
+    <div class="wrap">
+      <h1>ONE BAND WORKS</h1>
+      <p class="slogan">Systems that flow to grow.</p>
+      <p class="pillars-line"><span>People</span><span>Systems</span><span>Technology</span><span>Opportunity</span></p>
+
+      <div class="cluster">
+        <div class="col left">
+          <button class="hx pillar p-people" data-cat="people" aria-pressed="false"><span class="rim"></span><span class="in">
+            <svg class="ic" viewBox="0 0 48 40"><circle cx="24" cy="9" r="6"/><circle cx="10" cy="13" r="4.5"/><circle cx="38" cy="13" r="4.5"/><path d="M12 38v-6a12 12 0 0 1 24 0v6M2 36v-3a8 8 0 0 1 9-8M46 36v-3a8 8 0 0 0-9-8"/></svg>
+            <b>People</b><i>Empower individuals &amp; teams</i></span></button>
+          <button class="hx pillar p-systems" data-cat="systems" aria-pressed="false"><span class="rim"></span><span class="in">
+            <svg class="ic" viewBox="0 0 48 48"><circle cx="24" cy="24" r="8"/><path d="M24 4v7M24 37v7M4 24h7M37 24h7M9.9 9.9l5 5M33.1 33.1l5 5M9.9 38.1l5-5M33.1 14.9l5-5"/></svg>
+            <b>Systems</b><i>Build streamlined processes</i></span></button>
+        </div>
+        <div class="hx core" aria-hidden="true"><span class="rim"></span><span class="in"><img src="icon.png" alt="" width="160" height="160"></span></div>
+        <div class="col right">
+          <button class="hx pillar p-tech" data-cat="tech" aria-pressed="false"><span class="rim"></span><span class="trace"></span><span class="in">
+            <svg class="ic" viewBox="0 0 48 48"><rect x="13" y="13" width="22" height="22" rx="2"/><rect x="19" y="19" width="10" height="10"/><path d="M18 13V5M24 13V5M30 13V5M18 43v-8M24 43v-8M30 43v-8M13 18H5M13 24H5M13 30H5M43 18h-8M43 24h-8M43 30h-8"/></svg>
+            <b>Technology</b><i>Innovative tools for real growth</i></span></button>
+          <button class="hx pillar p-opp" data-cat="opp" aria-pressed="false"><span class="rim"></span><span class="in">
+            <svg class="ic" viewBox="0 0 48 48"><path d="M8 42V32h7v10M20 42V24h7v18M32 42V16h7v26M6 26 18 16l8 5 14-13M32 8h8v8"/></svg>
+            <b>Opportunity</b><i>Create sustainable impact</i></span></button>
+        </div>
+      </div>
+
+      <div class="cta-row">
+        <a class="go" href="#services">Get Started ›</a>
+        <a class="more" href="#about">Explore more</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="services">
+    <div class="wrap">
+      <div class="sub-head">
+        <div>
+          <p class="eyebrow" id="sub-eyebrow">Services</p>
+          <h2 id="sub-title">People</h2>
+          <p id="sub-blurb"></p>
+        </div>
+        <div style="display:grid;gap:12px;justify-items:end">
+          <div class="toolbar">
+            <label class="switch"><input type="checkbox" id="sw-prices" checked><span class="track"><span class="knob"></span></span>Prices</label>
+            <label class="switch"><input type="checkbox" id="sw-motion" checked><span class="track"><span class="knob"></span></span>Live scene</label>
+          </div>
+          <div class="tabs" role="tablist" aria-label="Pillars" id="tabs"></div>
+        </div>
+      </div>
+      <div class="sub-layout">
+        <div class="comb" id="comb-cells"></div>
+        <article class="detail" id="detail" aria-live="polite"></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec about" id="about">
+    <div class="wrap">
+      <div class="top">
+        <div style="display:grid;gap:10px">
+          <p class="eyebrow">About</p>
+          <h2>One band: an outer circle and an inner circle, moving as one.</h2>
+        </div>
+        <div style="display:grid;gap:12px">
+          <p>Like bees in a hive, we work as one band toward one goal, and every step is intentional. The result comes out smooth as honey.</p>
+          <p>Founded in Jonesboro, Georgia by a trained electronics technician and production manager who has handled field service accounts for major ATM, self-service, and security technology brands. We fix what's broken, build what's missing, and set up systems that keep getting better.</p>
+        </div>
+      </div>
+      <div class="words">
+        <div class="word">
+          <h3>O.N.E.</h3>
+          <dl>
+            <div><dt>O</dt><dd><strong>Organize</strong>Organizing is the blueprint. We plan the timing and the process around what you need and where you're going, so everything after it flows.</dd></div>
+            <div><dt>N</dt><dd><strong>Nurture</strong>Everything that's part of the work gets cared for: customers, employees, products, processes.</dd></div>
+            <div><dt>E</dt><dd><strong>Expand</strong>We scale what's already working: more customers, more output, more reach, without breaking what got you there.</dd></div>
+          </dl>
+        </div>
+        <div class="word">
+          <h3>B.A.N.D.</h3>
+          <dl>
+            <div><dt>B</dt><dd><strong>Build</strong>Whatever you need to grow, from the systems that run your business to the sound and art that tell your story.</dd></div>
+            <div><dt>A</dt><dd><strong>Align</strong>Your time, your process, and what your customers need, moving as one.</dd></div>
+            <div><dt>N</dt><dd><strong>Nurture</strong>It's in both words because it's the one thing we never stop doing.</dd></div>
+            <div><dt>D</dt><dd><strong>Develop</strong>Products that work, processes that last, and customer relationships that keep growing after the job is done.</dd></div>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="solutions">
+    <div class="wrap">
+      <div style="display:grid;gap:10px;margin-bottom:26px;max-width:40em">
+        <p class="eyebrow">Solutions</p>
+        <h2>Packages that bring the whole hive to your business.</h2>
+      </div>
+      <div class="duo">
+        <div class="panel">
+          <h3>Launch Package</h3>
+          <p class="note">For new small businesses that need to look ready on day one.</p>
+          <ul><li>Brand core: name, slogan, mission</li><li>Logo and icon kit</li><li>3-page phone-friendly website</li></ul>
+          <span class="price">$2,000 to $3,000</span>
+        </div>
+        <div class="panel">
+          <h3>Smooth Shop Package</h3>
+          <p class="note">For running businesses that want less rework and fewer breakdowns.</p>
+          <ul><li>Half-day process checkup and report</li><li>Custom quality and rework tracker</li><li>3 months of equipment maintenance</li></ul>
+          <span class="price">$1,500 to $2,500</span>
+        </div>
+      </div>
+      <div class="terms">
+        <div><b>Quotes</b><span>Written quote before any work starts</span></div>
+        <div><b>Deposit</b><span>50% up front on projects over $300</span></div>
+        <div><b>Revisions</b><span>2 rounds on creative and web work</span></div>
+        <div><b>Travel</b><span>Free within 25 miles of Jonesboro</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec about" id="resources">
+    <div class="wrap">
+      <div style="display:grid;gap:10px;margin-bottom:26px;max-width:40em">
+        <p class="eyebrow">Resources</p>
+        <h2>Built in the hive.</h2>
+        <p class="note">Recent builds, made with AI as our worker bee and a real person accountable for every one.</p>
+      </div>
+      <div class="duo">
+        <div class="panel"><h3>First-Time-Right Tracker</h3><p class="note">Rework prevention for production teams: checkpoints, a rework log, and an owner dashboard.</p></div>
+        <div class="panel"><h3>The O</h3><p class="note">A phone-friendly beginner course that teaches AI step by step.</p></div>
+        <div class="panel"><h3>Ember Grimoire</h3><p class="note">An interactive zodiac app with a sign book and journey view.</p></div>
+        <div class="panel"><h3>Empyrean Keys</h3><p class="note">A brand site for a handmade jewelry and body care maker.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec contact" id="contact">
+    <div class="wrap">
+      <div class="reach">
+        <p class="eyebrow">Contact</p>
+        <h2>Bring your project to the hive.</h2>
+        <p>Flip "Add to my quote" on any service above, then write your request here and copy it into an email.</p>
+        <div class="addr"><span id="email">chasetheworld14@gmail.com</span><button type="button" class="btn" id="copy-email">Copy</button></div>
+        <p class="note">Serving Jonesboro and south metro Atlanta. Web, brand, and creative work anywhere.</p>
+      </div>
+      <form id="quote">
+        <div class="f"><span>Services in your quote</span><div class="picked" id="picked"><span class="empty">None yet. Flip "Add to my quote" on any service.</span></div></div>
+        <label class="f" for="q-name">Your name<input type="text" id="q-name" required placeholder="Jordan Smith"></label>
+        <label class="f" for="q-details">Details<textarea id="q-details" placeholder="What's going on, and when do you need it done?"></textarea></label>
+        <button class="go" type="submit">Write my request ›</button>
+        <div id="quote-out" hidden></div>
+        <p class="note" id="quote-hint" hidden>Copied. Paste it into an email to the address on the left.</p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 One Band Works LLC · Jonesboro, Georgia</span>
+    <span>People · Systems · Technology · Opportunity</span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var CATS = {
+    people: { name: 'People', blurb: 'Empower individuals and teams: training that sticks, writing that gets read, and creative work that tells your story.', items: [
+      { n: 'Team training & SOPs', p: '$150 to $500 / guide', d: 'Step-by-step instructions your team can actually follow, written from watching the real job.', b: ['Plain language with photos', 'Hands-on training session', 'Easy to update'] },
+      { n: 'Business writing', p: '$150 to $500 / document', d: 'Staff policies, process letters, and reports to leadership that are clear and get read.', b: ['Policies and memos', 'Letters to management', 'Status reports'] },
+      { n: 'Brand core', p: '$300 to $750', d: 'Name, slogan, mission, and values, built the way we built One Band Works.', b: ['Name ideas with meanings', 'Slogan and acronym options', 'One-page brand core doc'] },
+      { n: 'AI portrait pack', p: '$50 to $150', d: 'Three to five custom AI portraits: warrior styles, family sets, and gifts.', b: ['Built from your photos', 'Custom themes and outfits', 'High-resolution files'] },
+      { n: 'Songwriting & ghostwriting', p: 'Hooks from $100 · songs from $300', d: 'Hooks, verses, and full songs in pop, hip-hop, soul, and R&B.', b: ['Written to your beat', 'Rights agreed up front', 'Revisions included'] }
+    ]},
+    systems: { name: 'Systems', blurb: 'Build streamlined processes. Production-floor discipline that finds the waste, cuts the rework, and matches your pace to demand.', items: [
+      { n: 'Process checkup', p: '$450 to $750', d: 'A half day on site watching how work really flows, then a written report with the fixes ranked by payoff.', b: ['Walkthrough and staff interviews', 'Waste and rework map', 'Top 5 fixes with time and cost saved'] },
+      { n: 'Workflow redesign', p: '$1,500 to $5,000', d: 'We rebuild the process step by step, set the pace to match demand, and train your team on the new flow.', b: ['New process map', 'Team training', '30-day follow-up check'] },
+      { n: 'Quality & rework tracker', p: '$500 to $1,500', d: 'A first-time-right tracker built for your shop. Operators log misses in seconds and you see what rework costs.', b: ['Checkpoints before work moves on', 'Rework log with causes', 'Owner dashboard'] },
+      { n: 'Maintenance plans', p: '$99 to $299 / month', d: 'Scheduled checkups for vending machines, kiosks, cameras, and point-of-sale gear, plus priority response.', b: ['Monthly or quarterly visits', 'Priority scheduling', 'One flat monthly price'] }
+    ]},
+    tech: { name: 'Technology', blurb: 'Innovative tools for real growth: hands-on repair from a field-proven tech, plus websites and apps built for your business.', items: [
+      { n: 'Equipment repair', p: 'From $85 service call', d: 'Diagnosis and repair for business equipment, done right the first time.', b: ['First hour includes travel in our area', 'Extra hours $75 to $95', 'Root cause noted so it does not come back'] },
+      { n: 'ATM & kiosk service', p: 'From $85 service call', d: 'Service on ATMs, self-service kiosks, and payment terminals from someone who has handled accounts for the major brands.', b: ['Diagnostics and part swaps', 'Preventive cleaning and checks', 'Clear service notes'] },
+      { n: 'Security camera systems', p: 'From $85 service call', d: 'Troubleshooting and upkeep for camera and plate-reader systems.', b: ['Power, network, and mounting checks', 'Coverage review', 'Simple how-to for your staff'] },
+      { n: 'Websites', p: '$500 to $2,500', d: 'Phone-friendly sites, from a one-page starter to a five-page business site.', b: ['Your domain connected', 'Built phone-first', '2 rounds of revisions'] },
+      { n: 'Custom web apps', p: '$1,500 to $5,000+', d: 'Trackers, dashboards, and tools built around how your business works.', b: ['Planned with you step by step', 'Works on phones and tablets', 'Training included'] }
+    ]},
+    opp: { name: 'Opportunity', blurb: 'Create sustainable impact: launch strong, keep growing, and keep what you built running.', items: [
+      { n: 'Launch Package', p: '$2,000 to $3,000', d: 'Brand core, logo and icon kit, and a 3-page website for a business that needs to look ready on day one.', b: ['Everything to launch', 'About 15% less than buying separately', 'One point of contact'] },
+      { n: 'Smooth Shop Package', p: '$1,500 to $2,500', d: 'Process checkup, a custom rework tracker, and 3 months of maintenance for a running business.', b: ['Find the waste', 'Track the fixes', 'Keep the gear running'] },
+      { n: 'Logo & icon kit', p: '$250 to $600', d: 'Logo direction, refinement, and a simple icon version in every size you need.', b: ['Main logo and icon', 'Sizes for web and social', 'Color notes'] },
+      { n: 'AI story video', p: '$150 to $400', d: 'Short image-to-video clips and story scenes for promos and social posts.', b: ['Script and shot prompts', 'Start image design', 'Final clip'] },
+      { n: 'Contract field tech', p: '$55 to $90 / hour', d: 'Subcontract coverage for service companies that need a reliable tech in south metro Atlanta.', b: ['Follows your work orders', 'Photo and note close-outs', 'Same-week availability'] },
+      { n: 'Website care plan', p: '$50 to $150 / month', d: 'We keep your site running and make small changes when you need them.', b: ['Updates and fixes', 'Small content changes', 'Monthly check'] }
+    ]}
+  };
+  var order = ['people', 'systems', 'tech', 'opp'];
+  var state = { cat: 'people', picked: [] };
+  var reduceMQ = matchMedia('(prefers-reduced-motion: reduce)');
+
+  var tabs = document.getElementById('tabs');
+  order.forEach(function (k) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.setAttribute('role', 'tab'); b.dataset.cat = k; b.textContent = CATS[k].name;
+    b.addEventListener('click', function () { openCat(k, false); });
+    tabs.appendChild(b);
+  });
+  document.querySelectorAll('.cluster .pillar').forEach(function (c) {
+    c.addEventListener('click', function () { openCat(c.dataset.cat, true); });
+  });
+
+  function openCat(k, scroll) {
+    state.cat = k;
+    document.querySelectorAll('.cluster .pillar').forEach(function (c) { c.setAttribute('aria-pressed', c.dataset.cat === k ? 'true' : 'false'); });
+    tabs.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.cat === k ? 'true' : 'false'); });
+    var cat = CATS[k];
+    document.getElementById('sub-title').textContent = cat.name;
+    document.getElementById('sub-blurb').textContent = cat.blurb;
+    document.getElementById('sub-eyebrow').textContent = 'Services · ' + cat.items.length + ' cells';
+    var comb = document.getElementById('comb-cells');
+    comb.innerHTML = '';
+    cat.items.forEach(function (it, i) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'hx';
+      b.innerHTML = '<span class="rim"></span><span class="in"><b></b><small></small></span>';
+      b.querySelector('b').textContent = it.n;
+      b.querySelector('small').textContent = it.p;
+      b.addEventListener('click', function () { selectItem(i); });
+      comb.appendChild(b);
+    });
+    selectItem(0);
+    if (scroll) document.getElementById('services').scrollIntoView({ behavior: reduceMQ.matches ? 'auto' : 'smooth' });
+  }
+
+  function selectItem(i) {
+    var cat = CATS[state.cat], it = cat.items[i], key = state.cat + ':' + i;
+    document.querySelectorAll('#comb-cells .hx').forEach(function (c, j) { c.setAttribute('aria-pressed', j === i ? 'true' : 'false'); });
+    var on = state.picked.indexOf(key) !== -1;
+    var d = document.getElementById('detail');
+    d.innerHTML = '<span class="cat"></span><h3></h3><p></p><ul></ul><span class="price"></span>' +
+      '<label class="switch"><input type="checkbox" id="sw-add"' + (on ? ' checked' : '') + '><span class="track"><span class="knob"></span></span>Add to my quote</label>';
+    d.querySelector('.cat').textContent = cat.name;
+    d.querySelector('h3').textContent = it.n;
+    d.querySelector('p').textContent = it.d;
+    d.querySelector('.price').textContent = it.p;
+    var ul = d.querySelector('ul');
+    it.b.forEach(function (t) { var li = document.createElement('li'); li.textContent = t; ul.appendChild(li); });
+    d.querySelector('#sw-add').addEventListener('change', function (e) {
+      var idx = state.picked.indexOf(key);
+      if (e.target.checked && idx === -1) state.picked.push(key);
+      if (!e.target.checked && idx !== -1) state.picked.splice(idx, 1);
+      renderPicked();
+    });
+  }
+
+  function renderPicked() {
+    var box = document.getElementById('picked');
+    box.innerHTML = '';
+    if (!state.picked.length) { box.innerHTML = '<span class="empty">None yet. Flip "Add to my quote" on any service.</span>'; return; }
+    state.picked.forEach(function (key) {
+      var p = key.split(':'), s = document.createElement('span');
+      s.className = 'chip'; s.textContent = CATS[p[0]].items[+p[1]].n; box.appendChild(s);
+    });
+  }
+
+  document.getElementById('sw-prices').addEventListener('change', function (e) { document.body.classList.toggle('no-prices', !e.target.checked); });
+  var motion = document.getElementById('sw-motion');
+  if (reduceMQ.matches) motion.checked = false;
+
+  // painted valley: sky, sunset, stars, mountains, castle cliff with waterfall, lake, hex overlay
+  var cv = document.getElementById('scene'), ctx = cv.getContext('2d'), W = 0, H = 0, stars = [], ridges = [], drops = [];
+  function rnd(seed) { return function () { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }; }
+  function build() {
+    var r = rnd(7);
+    stars = []; for (var i = 0; i < 140; i++) stars.push([r(), r() * .45, r() * 1.4 + .3, r() * 6.28]);
+    ridges = [];
+    var layers = [
+      { y: .50, amp: .16, col: ['#3b3a8f', '#2a2b72'], rough: 9 },
+      { y: .60, amp: .13, col: ['#2a2468', '#1b1a52'], rough: 7 },
+      { y: .70, amp: .10, col: ['#191a50', '#10123a'], rough: 6 }
+    ];
+    layers.forEach(function (L, li) {
+      var pts = [], n = 40;
+      for (var k = 0; k <= n; k++) {
+        var x = k / n;
+        var peak = Math.abs(Math.sin(x * L.rough + li * 1.7)) * .7 + Math.abs(Math.sin(x * L.rough * 2.3 + li)) * .3;
+        pts.push([x, L.y - peak * L.amp + (r() - .5) * .02]);
+      }
+      ridges.push({ pts: pts, col: L.col });
+    });
+    drops = []; for (var d = 0; d < 60; d++) drops.push([r(), r()]);
+  }
+  function size() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = cv.clientWidth; H = cv.clientHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    draw(0);
+  }
+  function hexPath(x, y, r) { ctx.beginPath(); for (var i = 0; i < 6; i++) { var a = Math.PI / 3 * i; ctx[i ? 'lineTo' : 'moveTo'](x + r * Math.cos(a), y + r * Math.sin(a)); } ctx.closePath(); }
+  function draw(t) {
+    if (!W || !H) return;
+    var sunX = W * .12, sunY = H * .42;
+    var sky = ctx.createLinearGradient(0, 0, 0, H * .75);
+    sky.addColorStop(0, '#0a0b33'); sky.addColorStop(.45, '#2a1d6e'); sky.addColorStop(.75, '#5a3a7a'); sky.addColorStop(1, '#2a2058');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+    var glow = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, Math.max(W, H) * .55);
+    glow.addColorStop(0, 'rgba(255,214,130,.95)'); glow.addColorStop(.08, 'rgba(255,170,80,.6)'); glow.addColorStop(.3, 'rgba(200,110,90,.22)'); glow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+    stars.forEach(function (s) {
+      var tw = .5 + .5 * Math.sin(t / 700 + s[3]);
+      ctx.fillStyle = 'rgba(255,255,255,' + (.25 + .55 * tw) + ')';
+      ctx.fillRect(s[0] * W, s[1] * H, s[2], s[2]);
+    });
+    ridges.forEach(function (R, i) {
+      var g = ctx.createLinearGradient(0, H * .3, 0, H);
+      g.addColorStop(0, R.col[0]); g.addColorStop(1, R.col[1]);
+      ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(0, H);
+      R.pts.forEach(function (p) { ctx.lineTo(p[0] * W, p[1] * H); });
+      ctx.lineTo(W, H); ctx.closePath(); ctx.fill();
+      // sunlit rim on the nearest-to-sun slopes
+      ctx.strokeStyle = 'rgba(255,190,110,' + (.35 - i * .1) + ')'; ctx.lineWidth = 1.2; ctx.beginPath();
+      R.pts.forEach(function (p, k) { if (p[0] < .5) ctx[k ? 'lineTo' : 'moveTo'](p[0] * W, p[1] * H); });
+      ctx.stroke();
+    });
+    // castle cliff, right side
+    var cx = W * .86, top = H * .34, cw = Math.min(W * .22, 300);
+    ctx.fillStyle = '#0e0f33';
+    ctx.beginPath(); ctx.moveTo(cx - cw * .55, H * .80); ctx.lineTo(cx - cw * .5, top + 30); ctx.lineTo(cx + cw * .6, top + 24); ctx.lineTo(W + 10, H * .8); ctx.closePath(); ctx.fill();
+    var towers = [[-.4, .22, .07], [-.25, .36, .06], [-.1, .5, .08], [.05, .32, .06], [.2, .42, .07], [.35, .26, .06], [.48, .18, .05]];
+    towers.forEach(function (tw, k) {
+      var x = cx + tw[0] * cw, h = tw[1] * H * .55, w = tw[2] * cw * 1.6;
+      ctx.fillStyle = '#141748'; ctx.fillRect(x - w / 2, top + 26 - h, w, h);
+      ctx.beginPath(); ctx.moveTo(x - w / 2 - 2, top + 26 - h); ctx.lineTo(x, top + 26 - h - w * 1.6); ctx.lineTo(x + w / 2 + 2, top + 26 - h); ctx.closePath(); ctx.fill();
+      for (var wy = top + 26 - h + 10; wy < top + 20; wy += 14) {
+        var flick = .6 + .4 * Math.sin(t / 900 + k * 3 + wy);
+        ctx.fillStyle = 'rgba(255,205,120,' + (.55 * flick) + ')'; ctx.fillRect(x - 1.5, wy, 3, 5);
+      }
+    });
+    // waterfalls
+    [[-.2, .9], [.12, .7]].forEach(function (f) {
+      var fx = cx + f[0] * cw, fw = 10 * f[1] + 6, fy = top + 28;
+      var wg = ctx.createLinearGradient(0, fy, 0, H * .8);
+      wg.addColorStop(0, 'rgba(200,215,255,.85)'); wg.addColorStop(1, 'rgba(140,160,255,.15)');
+      ctx.fillStyle = wg; ctx.fillRect(fx, fy, fw, H * .8 - fy);
+      drops.forEach(function (d) {
+        var yy = fy + ((d[1] + t / 2400) % 1) * (H * .8 - fy);
+        ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(fx + d[0] * fw, yy, 1.4, 6);
+      });
+    });
+    // lake with sun reflection
+    var lakeY = H * .78;
+    var lg = ctx.createLinearGradient(0, lakeY, 0, H);
+    lg.addColorStop(0, '#1d2266'); lg.addColorStop(1, '#070a26');
+    ctx.fillStyle = lg; ctx.fillRect(0, lakeY, W, H - lakeY);
+    for (var s = 0; s < 18; s++) {
+      var yy = lakeY + 6 + s * (H - lakeY) / 18, ww = (40 - s * 1.6) * (1 + .15 * Math.sin(t / 600 + s));
+      ctx.fillStyle = 'rgba(255,200,120,' + (.35 - s * .017) + ')'; ctx.fillRect(sunX - ww / 2, yy, ww, 2);
+    }
+    // hex glass overlay on the edges
+    var R = Math.max(46, W * .045);
+    for (var row = 0; row * R * 1.73 < H + R; row++) {
+      for (var col = 0; col * R * 1.5 < W + R; col++) {
+        var x = col * R * 1.5, y = row * R * 1.73 + (col % 2 ? R * .866 : 0);
+        var edge = Math.min(x, W - x) / W;
+        if (edge > .18) continue;
+        var a = (.18 - edge) / .18;
+        hexPath(x, y, R - 3);
+        ctx.strokeStyle = 'rgba(242,194,91,' + (.45 * a) + ')'; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.fillStyle = (row + col) % 3 ? 'rgba(40,50,150,' + (.22 * a) + ')' : 'rgba(110,60,200,' + (.25 * a) + ')'; ctx.fill();
+      }
+    }
+    // darken the bottom so the next section blends in
+    var fade = ctx.createLinearGradient(0, H * .82, 0, H);
+    fade.addColorStop(0, 'rgba(7,10,34,0)'); fade.addColorStop(1, 'rgba(7,10,34,1)');
+    ctx.fillStyle = fade; ctx.fillRect(0, H * .82, W, H * .18);
+  }
+  function loop(t) { if (motion.checked) draw(t); requestAnimationFrame(loop); }
+  build(); size();
+  window.addEventListener('resize', size);
+  requestAnimationFrame(loop);
+
+  // nav highlight
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav a'));
+  links.forEach(function (a) { a.addEventListener('click', function () { links.forEach(function (l) { l.classList.toggle('on', l === a); }); }); });
+
+  function copy(text, done) { try { navigator.clipboard.writeText(text).then(done, function () {}); } catch (e) {} }
+  document.getElementById('copy-email').addEventListener('click', function (ev) {
+    var btn = ev.currentTarget, el = document.getElementById('email');
+    copy(el.textContent, function () { btn.textContent = 'Copied'; });
+    var r = document.createRange(); r.selectNodeContents(el); var s = getSelection(); s.removeAllRanges(); s.addRange(r);
+  });
+  document.getElementById('quote').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var names = state.picked.map(function (key) { var p = key.split(':'); return CATS[p[0]].items[+p[1]].n; });
+    var text = 'Quote request for One Band Works\n\nName: ' + document.getElementById('q-name').value.trim() +
+      '\nServices: ' + (names.join(', ') || 'Not sure yet') +
+      '\nDetails: ' + (document.getElementById('q-details').value.trim() || '(none yet)');
+    var out = document.getElementById('quote-out'); out.textContent = text; out.hidden = false;
+    copy(text, function () { document.getElementById('quote-hint').hidden = false; });
+  });
+
+  openCat('people', false);
+})();
+</script>
+
+</body>
+</html>

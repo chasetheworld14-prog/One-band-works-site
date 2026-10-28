@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+</head>
+<body>
+<title>Queen Cell</title>
+<meta name="description" content="One Band Works, hive concept 1: a 3D honeycomb you fly into.">
+<link rel="icon" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0803; --bg2: #1a1006; --wax: #2b1c0a; --wax2: #3a260e;
+  --honey: #f6b730; --amber: #ff9419; --cream: #fff4dc; --muted: #c9b089;
+  --line: rgba(246, 183, 48, .28);
+  --display: 'Sora', system-ui, sans-serif; --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --W: clamp(112px, 12.5vw, 176px);
+  --H: calc(var(--W) * 1.1547);
+  --hex: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--cream); font-family: var(--display); }
+body { min-height: 100vh; overflow-x: hidden; }
+button { font: inherit; color: inherit; }
+
+/* backdrop */
+.bg { position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(60% 50% at 50% 55%, rgba(255, 148, 25, .22), transparent 70%),
+    radial-gradient(40% 30% at 15% 10%, rgba(246, 183, 48, .10), transparent 70%),
+    linear-gradient(180deg, var(--bg2), var(--bg));
+}
+.bg::after { content: ""; position: absolute; inset: 0; opacity: .5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='97' viewBox='0 0 56 97'%3E%3Cpath d='M28 0 56 16v32L28 64 0 48V16zM28 64v33M0 48l-28 16M56 48l28 16' fill='none' stroke='%23f6b730' stroke-opacity='.08' stroke-width='1'/%3E%3C/svg%3E");
+  -webkit-mask: radial-gradient(70% 60% at 50% 55%, #000, transparent);
+          mask: radial-gradient(70% 60% at 50% 55%, #000, transparent);
+}
+
+/* top bar */
+header { position: relative; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px clamp(16px, 4vw, 40px); flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
+.brand img { width: 34px; height: 34px; }
+.brand b { font-weight: 800; letter-spacing: .08em; font-size: .95rem; display: block; }
+.brand i { font-size: .72rem; color: var(--honey); font-style: normal; letter-spacing: .04em; }
+.hud { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.switch { display: inline-flex; align-items: center; gap: 8px; background: none; border: 0; cursor: pointer; font-family: var(--mono); font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); padding: 4px 0; }
+.switch .track { width: 40px; height: 20px; border-radius: 99px; background: var(--wax); border: 1px solid var(--line); position: relative; transition: background .25s; }
+.switch .knob { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; clip-path: var(--hex); background: var(--muted); transition: transform .25s, background .25s; }
+.switch[aria-checked="true"] { color: var(--cream); }
+.switch[aria-checked="true"] .track { background: rgba(246, 183, 48, .25); }
+.switch[aria-checked="true"] .knob { transform: translateX(20px); background: var(--honey); box-shadow: 0 0 10px var(--honey); }
+.order-btn { font-family: var(--mono); font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; background: var(--honey); color: #1a1006; border: 0; padding: 9px 14px; border-radius: 999px; cursor: pointer; font-weight: 500; }
+.order-btn span { display: inline-block; min-width: 1.4em; padding: 0 5px; margin-left: 6px; border-radius: 99px; background: #1a1006; color: var(--honey); }
+
+/* breadcrumb */
+.crumbs { position: relative; z-index: 5; display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; font-family: var(--mono); font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); padding: 0 16px; }
+.crumbs button { background: none; border: 0; cursor: pointer; color: var(--muted); padding: 4px 2px; letter-spacing: inherit; text-transform: inherit; }
+.crumbs button:hover { color: var(--honey); }
+.crumbs .now { color: var(--honey); }
+.crumbs .sep { opacity: .5; }
+
+/* stage */
+.stage { position: relative; z-index: 2; perspective: 1100px; height: calc(var(--H) * 2.75); margin: 10px auto 0; display: grid; place-items: center; touch-action: pan-y; }
+.world { position: relative; width: calc(var(--W) * 3.3); height: calc(var(--H) * 2.7); transform-style: preserve-3d; transform: rotateX(var(--rx, 14deg)) rotateY(var(--ry, 0deg)); transition: transform .5s cubic-bezier(.2, .7, .2, 1); }
+.comb { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .55s cubic-bezier(.6, 0, .3, 1), opacity .45s; }
+.comb.out { transform: translateZ(380px) scale(1.4); opacity: 0; }
+.comb.in-start { transform: translateZ(-400px) scale(.6); opacity: 0; transition: none; }
+
+.cell { position: absolute; left: 50%; top: 50%; width: var(--W); height: var(--H); margin: calc(var(--H) / -2) 0 0 calc(var(--W) / -2);
+  transform-style: preserve-3d; transform: translate(var(--x), var(--y)); background: none; border: 0; padding: 0; cursor: pointer; }
+.cell .side, .cell .face { position: absolute; inset: 0; clip-path: var(--hex); }
+.cell .side { background: linear-gradient(180deg, #7a4a0c, #2a1804); transform: translateZ(0); }
+.cell .side.s2 { transform: translateZ(9px); background: linear-gradient(180deg, #a5650f, #3b2307); }
+.cell .face { transform: translateZ(18px); background: linear-gradient(160deg, var(--wax2), var(--wax) 60%, #1d1306); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 18% 14%; text-align: center; overflow: hidden; transition: transform .3s cubic-bezier(.2, .7, .2, 1); }
+.cell .face::before { content: ""; position: absolute; inset: 3px; clip-path: var(--hex); border: 0; background: transparent; box-shadow: inset 0 0 0 2px rgba(246, 183, 48, .55); pointer-events: none; }
+.cell .face::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: var(--fill, 0%); background: linear-gradient(180deg, rgba(255, 196, 70, .55), rgba(255, 148, 25, .85)); transition: height .5s cubic-bezier(.2, .7, .2, 1); z-index: 0; }
+.cell .face > * { position: relative; z-index: 1; }
+.cell:hover .face, .cell:focus-visible .face { transform: translateZ(46px); }
+.cell { --fill: 12%; }
+.cell:hover, .cell:focus-visible { --fill: 42%; outline: none; }
+.bee { position: absolute; left: 50%; top: 50%; width: 9px; height: 9px; margin: -4px; border-radius: 50%; background: radial-gradient(circle, #fff6d0, var(--honey) 55%, transparent 70%); box-shadow: 0 0 10px 3px rgba(246, 183, 48, .7); pointer-events: none; transform-style: preserve-3d; }
+.bee::before, .bee::after { content: ""; position: absolute; top: -5px; width: 8px; height: 6px; border-radius: 50%; background: rgba(255, 244, 220, .55); animation: buzz .08s infinite alternate; }
+.bee::before { left: -5px; } .bee::after { right: -5px; }
+@keyframes buzz { to { transform: scaleY(.3); } }
+.cell:focus-visible .face { box-shadow: 0 0 0 3px var(--cream); }
+.cell .k { font-family: var(--mono); font-size: clamp(.56rem, .8vw, .66rem); letter-spacing: .16em; color: var(--honey); text-transform: uppercase; }
+.cell .n { font-weight: 800; font-size: clamp(.72rem, 1.2vw, 1rem); line-height: 1.15; letter-spacing: .02em; }
+.cell .s { font-size: clamp(.58rem, .85vw, .74rem); color: var(--muted); line-height: 1.25; }
+.cell .p { font-family: var(--mono); font-size: clamp(.54rem, .8vw, .68rem); color: var(--honey); }
+.cell svg { width: clamp(22px, 2.6vw, 34px); height: auto; stroke: var(--honey); fill: none; stroke-width: 1.6; }
+.cell.core .face { background: radial-gradient(circle at 50% 40%, #4b300e, #1d1306 75%); padding: 14%; }
+.cell.core img { width: 78%; height: auto; filter: drop-shadow(0 0 14px rgba(246, 183, 48, .55)); }
+.cell.core .n { font-size: clamp(.8rem, 1.4vw, 1.15rem); }
+.cell.hot .face { background: linear-gradient(160deg, #6b420c, #3b250a 70%); }
+.cell.picked { --fill: 100%; }
+.cell.picked .n, .cell.picked .s { color: #1a1006; }
+.cell.picked .p, .cell.picked .k { color: #3b2307; }
+.cell.empty { cursor: default; pointer-events: none; }
+.cell.empty .face { background: linear-gradient(160deg, #1f1508, #140d05); }
+.cell.empty .face::before { box-shadow: inset 0 0 0 1px rgba(246, 183, 48, .15); }
+.cell.glow .side { filter: drop-shadow(0 0 0 transparent); }
+.shadow { position: absolute; left: 50%; top: 50%; width: calc(var(--W) * 3.4); height: calc(var(--H) * 2.7); transform: translate(-50%, -50%) translateZ(-30px); background: radial-gradient(closest-side, rgba(0, 0, 0, .55), transparent); }
+
+.hint { position: relative; z-index: 3; text-align: center; font-family: var(--mono); font-size: .76rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 6px 16px 0; }
+.lead { position: relative; z-index: 3; text-align: center; max-width: 600px; margin: 8px auto 0; padding: 0 16px; color: var(--muted); line-height: 1.55; font-size: .95rem; min-height: 3em; }
+
+/* panel */
+.panel { position: fixed; z-index: 20; right: 0; top: 0; bottom: 0; width: min(420px, 100%); background: linear-gradient(180deg, #1f1407, #120b04); border-left: 1px solid var(--line); box-shadow: -20px 0 50px rgba(0, 0, 0, .6); transform: translateX(105%); transition: transform .4s cubic-bezier(.2, .7, .2, 1); display: flex; flex-direction: column; }
+.panel.open { transform: none; }
+.panel .top { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: .75rem; letter-spacing: .14em; text-transform: uppercase; color: var(--honey); }
+.panel .x { background: none; border: 1px solid var(--line); border-radius: 99px; width: 34px; height: 34px; cursor: pointer; color: var(--cream); font-size: 1.1rem; }
+.panel .body { padding: 22px 20px 30px; overflow-y: auto; flex: 1; }
+.panel h2 { margin: 0 0 6px; font-size: 1.6rem; line-height: 1.15; }
+.panel .price { font-family: var(--mono); color: var(--honey); margin-bottom: 14px; }
+.panel p { color: var(--muted); line-height: 1.6; margin: 0 0 14px; }
+.panel ul { list-style: none; padding: 0; margin: 0 0 20px; display: grid; gap: 8px; }
+.panel li { display: flex; gap: 10px; align-items: baseline; line-height: 1.45; }
+.panel li::before { content: ""; flex: none; width: 10px; height: 11px; clip-path: var(--hex); background: var(--honey); transform: translateY(1px); }
+.panel .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 0; border-top: 1px solid var(--line); }
+.panel textarea { width: 100%; min-height: 160px; background: #0d0803; color: var(--cream); border: 1px solid var(--line); border-radius: 10px; padding: 12px; font-family: var(--mono); font-size: .8rem; line-height: 1.5; resize: vertical; }
+.panel input { width: 100%; background: #0d0803; color: var(--cream); border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; font: inherit; margin-bottom: 10px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; background: var(--honey); color: #1a1006; border: 0; border-radius: 999px; padding: 11px 18px; font-weight: 700; cursor: pointer; letter-spacing: .04em; }
+.btn.ghost { background: none; color: var(--honey); border: 1px solid var(--line); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+.chip { font-family: var(--mono); font-size: .72rem; padding: 6px 10px; border-radius: 99px; border: 1px solid var(--line); color: var(--cream); }
+.toast { min-height: 1.4em; font-family: var(--mono); font-size: .75rem; color: var(--honey); margin-top: 8px; }
+.scrim { position: fixed; inset: 0; z-index: 15; background: rgba(0, 0, 0, .45); opacity: 0; pointer-events: none; transition: opacity .3s; }
+.scrim.open { opacity: 1; pointer-events: auto; }
+
+footer { position: relative; z-index: 3; text-align: center; font-family: var(--mono); font-size: .7rem; letter-spacing: .12em; color: var(--muted); padding: 30px 16px 26px; text-transform: uppercase; }
+
+@media (max-width: 640px) {
+  .panel { top: auto; height: 78vh; width: 100%; border-left: 0; border-top: 1px solid var(--line); border-radius: 18px 18px 0 0; transform: translateY(105%); }
+  .hud { gap: 10px; }
+  .stage { perspective: 800px; }
+  :root { --W: 29vw; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .world, .comb, .panel, .cell .face, .cell .face::after { transition: none; }
+}
+main { overflow-x: clip; }
+</style>
+
+<div class="bg" aria-hidden="true"></div>
+
+<header>
+  <a class="brand" href="#" data-go="hive"><img src="icon.png" alt=""><span><b>ONE BAND WORKS</b><i>Systems that flow to grow.</i></span></a>
+  <div class="hud">
+    <button class="switch" role="switch" aria-checked="true" id="swPrice"><span class="track"><span class="knob"></span></span>Prices</button>
+    <button class="switch" role="switch" aria-checked="true" id="swTilt"><span class="track"><span class="knob"></span></span>3D tilt</button>
+    <button class="order-btn" id="orderBtn">My order<span id="count">0</span></button>
+  </div>
+</header>
+
+<nav class="crumbs" id="crumbs" aria-label="Where you are"></nav>
+
+<main>
+  <div class="stage" id="stage">
+    <div class="world" id="world">
+      <div class="shadow"></div>
+      <div class="comb" id="comb"></div>
+    </div>
+  </div>
+  <p class="hint" id="hint">Tap a cell to fly in</p>
+  <p class="lead" id="lead"></p>
+</main>
+
+<div class="scrim" id="scrim"></div>
+<aside class="panel" id="panel" aria-hidden="true">
+  <div class="top"><span id="pTag">Cell</span><button class="x" id="pClose" aria-label="Close">×</button></div>
+  <div class="body" id="pBody"></div>
+</aside>
+
+<footer>One Band Works LLC · Georgia · Built cell by cell</footer>
+
+<script src="data.js"></script>
+<script>
+(function () {
+  var D = window.OBW, C = D.cats;
+  var ICON = {
+    people: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><circle cx="5.5" cy="9.5" r="2.3"/><circle cx="18.5" cy="9.5" r="2.3"/><path d="M6 20c0-3.6 2.7-6 6-6s6 2.4 6 6M1.5 19c0-2.6 1.6-4.5 4-4.8M22.5 19c0-2.6-1.6-4.5-4-4.8"/></svg>',
+    systems: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>',
+    tech: '<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1.5"/><rect x="9.5" y="9.5" width="5" height="5"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>',
+    opp: '<svg viewBox="0 0 24 24"><path d="M3 21h18M5 21v-5M10 21v-8M15 21v-6M20 21V9M4 13l6-5 4 3 7-7M16 4h5v5"/></svg>',
+    about: '<svg viewBox="0 0 24 24"><path d="M12 2 21 7v10l-9 5-9-5V7z"/><path d="M12 8v5M12 16h.01"/></svg>',
+    contact: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>'
+  };
+  var TAG = { people: 'Empower individuals & teams', systems: 'Build streamlined processes', tech: 'Innovative tools for real growth', opp: 'Create sustainable impact' };
+  /* neighbor slots around the center, pointy-top hex */
+  var SLOTS = [[-1, 0], [-.5, -.75], [.5, -.75], [1, 0], [.5, .75], [-.5, .75]];
+  var state = { level: 'hive', cat: null, picked: [], prices: true };
+
+  var comb = document.getElementById('comb'), world = document.getElementById('world'), stage = document.getElementById('stage');
+  var lead = document.getElementById('lead'), crumbs = document.getElementById('crumbs'), hint = document.getElementById('hint');
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  function cellHTML(o, i) {
+    var pos = i < 0 ? ['0px', '0px'] : ['calc(var(--W) * ' + (SLOTS[i][0] * 1.07) + ')', 'calc(var(--H) * ' + (SLOTS[i][1] * 1.07) + ')'];
+    var cls = 'cell' + (o.cls ? ' ' + o.cls : '');
+    var inner = o.inner || ((o.icon ? o.icon : '') + (o.k ? '<span class="k">' + esc(o.k) + '</span>' : '') + '<span class="n">' + esc(o.n || '') + '</span>' + (o.s ? '<span class="s">' + esc(o.s) + '</span>' : '') + (o.p && state.prices ? '<span class="p">' + esc(o.p) + '</span>' : ''));
+    return '<button class="' + cls + '" style="--x:' + pos[0] + ';--y:' + pos[1] + '"' + (o.act ? ' data-act="' + o.act + '"' : ' tabindex="-1" aria-hidden="true"') + (o.label ? ' aria-label="' + esc(o.label) + '"' : '') + '><span class="side"></span><span class="side s2"></span><span class="face">' + inner + '</span></button>';
+  }
+
+  function build() {
+    var html = '';
+    if (state.level === 'hive') {
+      html += cellHTML({ cls: 'core', act: 'about', label: 'About One Band Works', inner: '<img src="icon.png" alt=""><span class="n">ONE BAND</span>' }, -1);
+      var ring = [
+        { k: 'Pillar', n: 'People', s: TAG.people, icon: ICON.people, act: 'cat:people' },
+        { k: 'Pillar', n: 'Systems', s: TAG.systems, icon: ICON.systems, act: 'cat:systems' },
+        { k: 'Pillar', n: 'Technology', s: TAG.tech, icon: ICON.tech, act: 'cat:tech' },
+        { k: 'Pillar', n: 'Opportunity', s: TAG.opp, icon: ICON.opp, act: 'cat:opp' },
+        { k: 'Talk', n: 'Contact', s: 'Start a project', icon: ICON.contact, act: 'contact', cls: 'hot' },
+        { k: 'Story', n: 'Why a hive', s: 'O.N.E. + B.A.N.D.', icon: ICON.about, act: 'about' }
+      ];
+      ring.forEach(function (o, i) { html += cellHTML(o, i); });
+      lead.textContent = 'Every bee has a job, every step is intentional, and the result is smooth as honey. Pick a pillar to fly into its cells.';
+      hint.textContent = 'Tap a cell to fly in';
+    } else {
+      var cat = C[state.cat];
+      html += cellHTML({ cls: 'core', act: 'back', label: 'Back to the hive', inner: ICON[state.cat] + '<span class="n">' + esc(cat.name) + '</span><span class="s">Back to hive</span>' }, -1);
+      for (var i = 0; i < 6; i++) {
+        var it = cat.items[i];
+        if (it) html += cellHTML({ k: 'Cell ' + (i + 1), n: it.n, p: it.p, act: 'svc:' + i, cls: state.picked.indexOf(state.cat + ':' + i) > -1 ? 'picked' : '' }, i);
+        else html += cellHTML({ cls: 'empty', n: '' }, i);
+      }
+      lead.textContent = cat.blurb;
+      hint.textContent = 'Tap a cell for details · center goes back';
+    }
+    comb.innerHTML = html;
+    renderCrumbs();
+  }
+
+  function renderCrumbs() {
+    var h = '<button data-act="back">Hive</button>';
+    if (state.level === 'cat') h += '<span class="sep">/</span><span class="now">' + esc(C[state.cat].name) + '</span>';
+    else h = '<span class="now">Hive</span>';
+    crumbs.innerHTML = h;
+  }
+
+  function fly(fn) {
+    if (reduce) { fn(); return; }
+    comb.classList.add('out');
+    setTimeout(function () {
+      fn();
+      comb.classList.remove('out');
+      comb.classList.add('in-start');
+      void comb.offsetWidth;
+      comb.classList.remove('in-start');
+    }, 420);
+  }
+
+  /* panel */
+  var panel = document.getElementById('panel'), scrim = document.getElementById('scrim'), pBody = document.getElementById('pBody'), pTag = document.getElementById('pTag');
+  function openPanel(tag, html) { pTag.textContent = tag; pBody.innerHTML = html; panel.classList.add('open'); scrim.classList.add('open'); panel.setAttribute('aria-hidden', 'false'); document.getElementById('pClose').focus(); }
+  function closePanel() { panel.classList.remove('open'); scrim.classList.remove('open'); panel.setAttribute('aria-hidden', 'true'); }
+  document.getElementById('pClose').onclick = closePanel; scrim.onclick = closePanel;
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePanel(); });
+
+  function svcPanel(i) {
+    var it = C[state.cat].items[i], key = state.cat + ':' + i, on = state.picked.indexOf(key) > -1;
+    openPanel(C[state.cat].name + ' · cell ' + (i + 1),
+      '<h2>' + esc(it.n) + '</h2>' + (state.prices ? '<div class="price">' + esc(it.p) + '</div>' : '') +
+      '<p>' + esc(it.d) + '</p><ul>' + it.b.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' +
+      '<div class="row"><span>Add to my order</span><button class="switch" role="switch" aria-checked="' + on + '" data-pick="' + key + '"><span class="track"><span class="knob"></span></span>' + (on ? 'Added' : 'Off') + '</button></div>');
+  }
+
+  function aboutPanel() {
+    openPanel('Why a hive',
+      '<h2>Bees work as one band.</h2><p>A hive has no wasted motion. Every bee knows its job, every step is intentional, and what comes out is smooth as honey. That is how One Band Works runs: field-proven repair, production-floor process discipline, and modern web and AI tools, all working toward your goal.</p>' +
+      '<p style="color:var(--honey);font-family:var(--mono);letter-spacing:.12em;text-transform:uppercase;font-size:.75rem">O.N.E.</p><ul><li>Organize</li><li>Nurture</li><li>Expand</li></ul>' +
+      '<p style="color:var(--honey);font-family:var(--mono);letter-spacing:.12em;text-transform:uppercase;font-size:.75rem">B.A.N.D.</p><ul><li>Build: whatever you need us to build</li><li>Align: time with the process and the demand</li><li>Nurture: every participant, customer or employee, product or process</li><li>Develop: quality products, quality processes, quality relationships</li></ul>');
+  }
+
+  function orderText(name) {
+    var lines = state.picked.map(function (k) { var a = k.split(':'); var it = C[a[0]].items[+a[1]]; return '• ' + it.n + ' (' + it.p + ')'; });
+    return 'Hi One Band Works,\n\nI would like a quote for:\n' + (lines.length ? lines.join('\n') : '• (tell us what you need)') + '\n\nName: ' + (name || '') + '\n\nThanks!';
+  }
+  function contactPanel() {
+    var chips = state.picked.map(function (k) { var a = k.split(':'); return '<span class="chip">' + esc(C[a[0]].items[+a[1]].n) + '</span>'; }).join('');
+    openPanel('My order',
+      '<h2>Start a project</h2><p>Pick cells inside any pillar and they collect here. Copy the note and send it to <b style="color:var(--cream)">' + D.email + '</b>.</p>' +
+      '<div class="chips">' + (chips || '<span class="chip">No cells picked yet</span>') + '</div>' +
+      '<input id="oName" placeholder="Your name" autocomplete="name">' +
+      '<textarea id="oText" readonly></textarea><div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap"><button class="btn" id="oCopy">Copy note</button><button class="btn ghost" id="oMail">Copy email</button></div><div class="toast" id="oToast" role="status"></div>');
+    var t = document.getElementById('oText'), n = document.getElementById('oName');
+    t.value = orderText('');
+    n.oninput = function () { t.value = orderText(n.value); };
+    document.getElementById('oCopy').onclick = function () { copy(t.value, 'Note copied'); };
+    document.getElementById('oMail').onclick = function () { copy(D.email, 'Email copied'); };
+  }
+  function copy(text, msg) {
+    var toast = document.getElementById('oToast');
+    function fallback() { var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); toast.textContent = msg; } catch (e) { toast.textContent = 'Select and copy it by hand'; } ta.remove(); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { toast.textContent = msg; }, fallback); else fallback();
+  }
+
+  function setCount() { document.getElementById('count').textContent = state.picked.length; }
+
+  document.addEventListener('click', function (e) {
+    var pick = e.target.closest('[data-pick]');
+    if (pick) {
+      var k = pick.dataset.pick, idx = state.picked.indexOf(k);
+      if (idx > -1) state.picked.splice(idx, 1); else state.picked.push(k);
+      var on = idx < 0; pick.setAttribute('aria-checked', on); pick.lastChild.textContent = on ? 'Added' : 'Off';
+      setCount(); build(); return;
+    }
+    var el = e.target.closest('[data-act], [data-go]');
+    if (!el) return;
+    var act = el.dataset.act || 'back';
+    if (el.dataset.go) e.preventDefault();
+    if (act.indexOf('cat:') === 0) { var c = act.slice(4); fly(function () { state.level = 'cat'; state.cat = c; build(); }); }
+    else if (act === 'back') { if (state.level !== 'hive') fly(function () { state.level = 'hive'; state.cat = null; build(); }); }
+    else if (act.indexOf('svc:') === 0) svcPanel(+act.slice(4));
+    else if (act === 'about') aboutPanel();
+    else if (act === 'contact') contactPanel();
+  });
+  document.getElementById('orderBtn').onclick = contactPanel;
+
+  function toggle(sw, fn) { sw.onclick = function () { var on = sw.getAttribute('aria-checked') !== 'true'; sw.setAttribute('aria-checked', on); fn(on); }; }
+  toggle(document.getElementById('swPrice'), function (on) { state.prices = on; build(); });
+  var tilt = !reduce;
+  var swTilt = document.getElementById('swTilt');
+  if (reduce) swTilt.setAttribute('aria-checked', 'false');
+  toggle(swTilt, function (on) { tilt = on; if (!on) { world.style.setProperty('--rx', '0deg'); world.style.setProperty('--ry', '0deg'); } else world.style.setProperty('--rx', '14deg'); });
+
+  /* 3D tilt follows the pointer, gentle idle sway otherwise */
+  var lastMove = 0;
+  window.addEventListener('pointermove', function (e) {
+    if (!tilt || e.pointerType === 'touch') return;
+    lastMove = Date.now();
+    var r = stage.getBoundingClientRect();
+    var x = (e.clientX - (r.left + r.width / 2)) / r.width, y = (e.clientY - (r.top + r.height / 2)) / r.height;
+    world.style.setProperty('--ry', (x * 22).toFixed(2) + 'deg');
+    world.style.setProperty('--rx', (14 - y * 16).toFixed(2) + 'deg');
+  });
+  (function sway() {
+    if (tilt && Date.now() - lastMove > 2500) {
+      var t = Date.now() / 1000;
+      world.style.setProperty('--ry', (Math.sin(t * .5) * 10).toFixed(2) + 'deg');
+      world.style.setProperty('--rx', (14 + Math.cos(t * .4) * 4).toFixed(2) + 'deg');
+    }
+    setTimeout(sway, 120);
+  })();
+
+  /* worker bees drift between cells */
+  var bees = [];
+  if (!reduce) for (var b = 0; b < 5; b++) {
+    var el = document.createElement('span'); el.className = 'bee'; world.appendChild(el);
+    bees.push({ el: el, x: 0, y: 0, tx: 0, ty: 0, z: 40 + Math.random() * 60, sp: .015 + Math.random() * .02, t: Math.random() * 6 });
+  }
+  function pickTarget(bee) {
+    var c0 = comb.querySelector('.cell'), w = (c0 && c0.offsetWidth) || 140, h = w * 1.1547;
+    var s = Math.random() < .25 ? [0, 0] : SLOTS[Math.floor(Math.random() * 6)];
+    bee.tx = s[0] * w * 1.07 + (Math.random() - .5) * w * .5; bee.ty = s[1] * h * 1.07 + (Math.random() - .5) * h * .4;
+  }
+  bees.forEach(pickTarget);
+  (function fly() {
+    bees.forEach(function (bee) {
+      bee.t += .08;
+      bee.x += (bee.tx - bee.x) * bee.sp; bee.y += (bee.ty - bee.y) * bee.sp;
+      if (Math.abs(bee.tx - bee.x) + Math.abs(bee.ty - bee.y) < 6) pickTarget(bee);
+      bee.el.style.transform = 'translate3d(' + (bee.x + Math.sin(bee.t) * 6).toFixed(1) + 'px,' + (bee.y + Math.cos(bee.t * 1.3) * 5).toFixed(1) + 'px,' + bee.z.toFixed(0) + 'px)';
+    });
+    requestAnimationFrame(fly);
+  })();
+
+  build(); setCount();
+})();
+</script>
+
+</body>
+</html>

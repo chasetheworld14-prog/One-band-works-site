@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>One Band Works · Previews</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root { --bg: #070a22; --card: #10163a; --gold: #f2c25b; --purple: #9b5cff; --text: #eef0ff; --muted: #a8aed6; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: radial-gradient(70% 50% at 50% 0%, #1d1650, var(--bg)); color: var(--text); font-family: Montserrat, system-ui, sans-serif; min-height: 100vh; }
+main { width: min(760px, 100% - 32px); margin: 0 auto; padding: 48px 0 60px; }
+header { text-align: center; margin-bottom: 30px; }
+header img { width: 84px; height: 84px; }
+h1 { margin: 10px 0 4px; letter-spacing: .08em; font-size: clamp(1.6rem, 6vw, 2.4rem); }
+.slogan { color: var(--purple); font-style: italic; margin: 0 0 10px; }
+.note { color: var(--muted); font-size: .92rem; line-height: 1.5; }
+a.card { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-decoration: none; color: inherit; background: var(--card); border: 1px solid rgba(242, 194, 91, .25); border-radius: 16px; padding: 18px 20px; margin-bottom: 12px; }
+a.card:hover, a.card:focus-visible { border-color: var(--gold); outline: none; }
+a.card b { font-size: 1.05rem; }
+a.card span { color: var(--muted); font-size: .88rem; grid-column: 1; line-height: 1.4; }
+a.card i { grid-row: 1 / span 2; grid-column: 2; color: var(--gold); font-style: normal; font-size: 1.4rem; }
+.tag { display: inline-block; font-size: .66rem; letter-spacing: .14em; text-transform: uppercase; color: #1a1006; background: var(--gold); border-radius: 99px; padding: 2px 8px; margin-left: 6px; vertical-align: 2px; }
+footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 30px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="icon.png" alt="One Band Works">
+    <h1>ONE BAND WORKS</h1>
+    <p class="slogan">Systems that flow to grow.</p>
+    <p class="note">Private preview area. Pick a version to test on your phone.</p>
+  </header>
+  <a class="card" href="v3/"><b>Reference look (v3) <em class="tag">current pick</em></b><span>Mountain valley, castle, gold hex cells around the logo.</span><i>›</i></a>
+  <a class="card" href="hive/queen/"><b>Hive 1 · The Queen Cell</b><span>A 3D honeycomb you fly into, cell by cell.</span><i>›</i></a>
+  <a class="card" href="hive/swarm/"><b>Hive 2 · Swarm Network</b><span>Futuristic circuit hive with a switchboard work order.</span><i>›</i></a>
+  <a class="card" href="hive/honey/"><b>Hive 3 · Honey Flow</b><span>Warm scroll story where honey fills the comb.</span><i>›</i></a>
+  <footer>One Band Works LLC · Georgia</footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+</head>
+<body>
+<title>Honey Flow</title>
+<meta name="description" content="One Band Works, hive concept 3: a warm scroll story where honey fills the comb.">
+<link rel="icon" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,400;1,9..144,600&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #fbf4e4; --bg2: #f5e7c8; --card: #fffaf0; --ink: #2a1a08; --soft: #6e5636;
+  --honey: #e9a21a; --amber: #b8660b; --deep: #7a3f05; --line: rgba(122, 63, 5, .16);
+  --serif: 'Fraunces', Georgia, serif; --sans: 'Manrope', system-ui, sans-serif;
+  --hex: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); }
+body { overflow-x: hidden; }
+button { font: inherit; color: inherit; }
+.wrap { width: min(1120px, 100% - 32px); margin-inline: auto; }
+.eyebrow { font-size: .74rem; letter-spacing: .22em; text-transform: uppercase; color: var(--amber); font-weight: 700; }
+
+/* drip header */
+.drip { position: relative; background: linear-gradient(180deg, #f2b632, var(--honey)); color: #3b1f02; }
+.drip .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0 4px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
+.brand img { width: 34px; height: 34px; }
+.brand b { font-family: var(--serif); font-weight: 800; font-size: 1.1rem; letter-spacing: .01em; }
+nav { display: flex; gap: 4px 20px; flex-wrap: wrap; }
+nav a { color: inherit; text-decoration: none; font-weight: 700; font-size: .86rem; padding: 4px 0; border-bottom: 2px solid transparent; }
+nav a:hover { border-color: currentColor; }
+.drip svg { display: block; width: 100%; height: 46px; margin-bottom: -45px; position: relative; z-index: 2; }
+
+/* honey meter */
+.meter { position: fixed; left: max(12px, calc((100vw - 1120px) / 2 - 64px)); top: 50%; transform: translateY(-50%); z-index: 20; display: grid; gap: 6px; }
+.meter a { display: block; width: 26px; height: 30px; clip-path: var(--hex); background: var(--line); position: relative; }
+.meter a::before { content: ""; position: absolute; inset: 2px; clip-path: var(--hex); background: var(--bg); }
+.meter a span { position: absolute; inset: 2px; clip-path: var(--hex); overflow: hidden; }
+.meter a span::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: var(--f, 0%); background: linear-gradient(180deg, #f6c24d, var(--amber)); transition: height .2s; }
+.meter a:focus-visible { outline: 2px solid var(--amber); }
+
+/* hero */
+.hero { padding: 90px 0 70px; background: radial-gradient(60% 70% at 80% 40%, rgba(233, 162, 26, .22), transparent 70%); }
+.hero .wrap { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); gap: 40px; align-items: center; }
+.hero h1 { font-family: var(--serif); font-weight: 800; font-size: clamp(2.8rem, 7vw, 5.6rem); line-height: .95; margin: 14px 0 18px; letter-spacing: -.02em; }
+.hero h1 em { font-style: italic; font-weight: 400; color: var(--amber); }
+.hero .lede { font-size: 1.15rem; line-height: 1.6; color: var(--soft); max-width: 520px; margin: 0 0 26px; }
+.hero .slogan { font-family: var(--serif); font-style: italic; font-size: 1.35rem; color: var(--deep); margin: 0 0 8px; }
+.btn { display: inline-flex; align-items: center; gap: 10px; background: var(--ink); color: var(--bg); text-decoration: none; border: 0; cursor: pointer; padding: 14px 24px; border-radius: 999px; font-weight: 700; transition: transform .2s, background .2s; }
+.btn:hover { transform: translateY(-2px); background: var(--deep); }
+.btn.honey { background: var(--honey); color: #3b1f02; }
+.btn.line { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
+.ctas { display: flex; gap: 12px; flex-wrap: wrap; }
+.combart { width: 100%; max-width: 480px; justify-self: center; }
+.combart svg { width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 24px 40px rgba(122, 63, 5, .22)); }
+
+section { padding: clamp(70px, 10vw, 120px) 0; }
+h2 { font-family: var(--serif); font-weight: 800; font-size: clamp(2rem, 4.6vw, 3.4rem); line-height: 1.02; letter-spacing: -.015em; margin: 12px 0 16px; }
+h2 em { font-weight: 400; color: var(--amber); }
+.intro { font-size: 1.08rem; color: var(--soft); line-height: 1.7; max-width: 640px; margin: 0 0 40px; }
+
+/* story */
+.story .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; align-items: start; }
+.story p { font-size: 1.08rem; line-height: 1.75; color: var(--soft); margin: 0 0 16px; }
+.story p:first-of-type::first-letter { font-family: var(--serif); font-weight: 800; float: left; font-size: 4.2rem; line-height: .8; padding: 6px 10px 0 0; color: var(--amber); }
+.facts { display: grid; gap: 14px; }
+.fact { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 16px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 16px; }
+.fact .hx { width: 56px; height: 64px; clip-path: var(--hex); background: linear-gradient(180deg, #f6c24d, var(--amber)); display: grid; place-items: center; font-family: var(--serif); font-weight: 800; color: #3b1f02; font-size: 1.3rem; }
+.fact b { display: block; font-family: var(--serif); font-size: 1.15rem; margin-bottom: 2px; }
+.fact span { color: var(--soft); font-size: .95rem; line-height: 1.5; }
+
+/* pillars */
+.pillars { background: var(--bg2); position: relative; }
+.cells { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
+.cell { background: var(--card); border: 1px solid var(--line); border-radius: 24px; overflow: hidden; position: relative; isolation: isolate; }
+.cell::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 0; background: linear-gradient(180deg, rgba(246, 194, 77, .35), rgba(233, 162, 26, .5)); transition: height .6s cubic-bezier(.2, .7, .2, 1); z-index: -1; }
+.cell:hover::before { height: 14px; }
+.cell.open::before { height: 100%; background: linear-gradient(180deg, rgba(246, 194, 77, .14), rgba(233, 162, 26, .22)); }
+.cell > button { display: grid; grid-template-columns: 70px minmax(0, 1fr) auto; gap: 18px; align-items: center; width: 100%; background: none; border: 0; padding: 22px; text-align: left; cursor: pointer; }
+.cell .hx { width: 66px; height: 76px; clip-path: var(--hex); background: var(--ink); display: grid; place-items: center; }
+.cell .hx svg { width: 30px; height: 30px; stroke: var(--honey); fill: none; stroke-width: 1.6; }
+.cell h3 { font-family: var(--serif); font-size: 1.6rem; margin: 0 0 4px; font-weight: 800; }
+.cell .tl { color: var(--soft); font-size: .95rem; }
+.cell .plus { width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid var(--ink); display: grid; place-items: center; font-size: 1.2rem; transition: transform .3s; }
+.cell.open .plus { transform: rotate(45deg); background: var(--ink); color: var(--bg); }
+.cell .list { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .45s cubic-bezier(.2, .7, .2, 1); }
+.cell.open .list { grid-template-rows: 1fr; }
+.cell .list > div { overflow: hidden; }
+.cell ul { list-style: none; margin: 0; padding: 0 22px 22px; display: grid; gap: 2px; }
+.cell li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 14px; padding: 12px 0; border-top: 1px dashed var(--line); }
+.cell li b { font-weight: 700; }
+.cell li i { font-style: normal; font-family: var(--serif); color: var(--deep); font-weight: 600; white-space: nowrap; }
+.cell li span { grid-column: 1 / -1; color: var(--soft); font-size: .9rem; line-height: 1.5; }
+.cell li label { grid-column: 1 / -1; display: inline-flex; align-items: center; gap: 8px; font-size: .82rem; font-weight: 700; color: var(--amber); cursor: pointer; width: max-content; }
+.cell li input { accent-color: var(--amber); width: 16px; height: 16px; }
+
+/* process */
+.steps { position: relative; display: grid; gap: 26px; padding-left: 54px; max-width: 760px; }
+.steps::before { content: ""; position: absolute; left: 20px; top: 8px; bottom: 8px; width: 4px; border-radius: 4px; background: var(--line); }
+.steps .flow { position: absolute; left: 20px; top: 8px; width: 4px; border-radius: 4px; background: linear-gradient(180deg, #f6c24d, var(--amber)); height: var(--fh, 0%); transition: height .2s; }
+.step { position: relative; }
+.step .dot { position: absolute; left: -48px; top: 0; width: 36px; height: 42px; clip-path: var(--hex); background: var(--honey); display: grid; place-items: center; font-family: var(--serif); font-weight: 800; color: #3b1f02; }
+.step h3 { font-family: var(--serif); font-size: 1.5rem; margin: 0 0 6px; }
+.step p { margin: 0; color: var(--soft); line-height: 1.65; }
+.step .tag { display: inline-block; font-size: .72rem; letter-spacing: .16em; text-transform: uppercase; font-weight: 700; color: var(--amber); margin-bottom: 4px; }
+
+/* packages */
+.packs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.pack { border-radius: 26px; padding: 30px; background: var(--ink); color: var(--bg); position: relative; overflow: hidden; }
+.pack.alt { background: var(--honey); color: #3b1f02; }
+.pack::after { content: ""; position: absolute; right: -40px; bottom: -40px; width: 180px; height: 208px; clip-path: var(--hex); background: rgba(255, 255, 255, .08); }
+.pack .pr { font-family: var(--serif); font-size: 1.1rem; font-style: italic; opacity: .85; }
+.pack h3 { font-family: var(--serif); font-size: 2rem; margin: 6px 0 10px; }
+.pack p { line-height: 1.6; margin: 0 0 16px; opacity: .85; }
+.pack ul { margin: 0; padding-left: 18px; line-height: 1.8; }
+.terms { margin-top: 22px; color: var(--soft); font-size: .92rem; line-height: 1.6; }
+
+/* contact */
+.contact { background: linear-gradient(180deg, var(--bg), var(--bg2)); }
+.jar { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 34px; background: var(--card); border: 1px solid var(--line); border-radius: 30px; padding: clamp(22px, 4vw, 44px); }
+.jar label.f { display: block; font-weight: 700; font-size: .85rem; margin: 0 0 6px; }
+.jar input[type=text], .jar textarea { width: 100%; border: 1.5px solid var(--line); background: var(--bg); border-radius: 14px; padding: 12px 14px; font: inherit; color: var(--ink); margin-bottom: 14px; }
+.jar textarea { min-height: 150px; resize: vertical; line-height: 1.55; font-size: .92rem; }
+.pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.pill { border: 1.5px solid var(--ink); border-radius: 999px; padding: 7px 14px; background: none; cursor: pointer; font-weight: 700; font-size: .85rem; }
+.pill[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.mail { font-family: var(--serif); font-size: 1.25rem; word-break: break-all; }
+.toast { min-height: 1.4em; color: var(--amber); font-weight: 700; font-size: .88rem; margin-top: 10px; }
+footer { padding: 30px 0 40px; color: var(--soft); font-size: .88rem; }
+footer .wrap { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 22px; }
+
+@media (max-width: 1240px) { .meter { display: none; } }
+@media (max-width: 860px) {
+  .hero .wrap, .story .wrap, .jar { grid-template-columns: minmax(0, 1fr); }
+  .combart { max-width: 340px; order: -1; }
+  .hero { padding-top: 60px; }
+  .cells, .packs { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 560px) {
+  nav { gap: 2px 14px; } nav a { font-size: .8rem; }
+  .cell > button { grid-template-columns: 52px minmax(0, 1fr) auto; gap: 12px; padding: 18px; }
+  .cell .hx { width: 50px; height: 58px; }
+  .cell h3 { font-size: 1.3rem; }
+  .steps { padding-left: 46px; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .cell::before, .cell .list, .btn { transition: none; } }
+</style>
+
+<div class="drip" id="top">
+  <div class="wrap">
+    <a class="brand" href="#top"><img src="icon.png" alt=""><b>One Band Works</b></a>
+    <nav aria-label="Main"><a href="#story">The hive</a><a href="#pillars">Services</a><a href="#process">Process</a><a href="#packages">Packages</a><a href="#contact">Contact</a></nav>
+  </div>
+  <svg viewBox="0 0 1440 46" preserveAspectRatio="none" aria-hidden="true"><path fill="#e9a21a" d="M0 0h1440v10c-30 0-34 8-40 18s-14 16-22 0-12-18-60-18c-40 0-44 4-52 22-6 14-22 14-26-2-5-16-20-20-90-20-50 0-60 6-66 14-6 10-16 10-20-4-4-10-16-10-120-10s-110 4-116 20c-5 14-20 22-28 2-6-14-14-22-80-22-60 0-70 6-76 30-4 16-22 16-26 0-6-22-16-30-110-30S530 12 524 26c-6 12-18 12-22-2-4-12-14-14-90-14-60 0-70 4-74 14-5 12-18 12-22 0-4-10-12-14-90-14S150 14 144 30c-5 14-22 16-28 0-6-14-14-20-116-20z"/></svg>
+</div>
+
+<nav class="meter" aria-label="Page progress" id="meter">
+  <a href="#top" aria-label="Top"><span></span></a>
+  <a href="#story" aria-label="The hive"><span></span></a>
+  <a href="#pillars" aria-label="Services"><span></span></a>
+  <a href="#process" aria-label="Process"><span></span></a>
+  <a href="#packages" aria-label="Packages"><span></span></a>
+  <a href="#contact" aria-label="Contact"><span></span></a>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div>
+      <span class="eyebrow">One Band Works LLC · Georgia</span>
+      <h1>Smooth as <em>honey.</em></h1>
+      <p class="slogan">Systems that flow to grow.</p>
+      <p class="lede">Bees don't waste a wingbeat. Every one has a job, every step is intentional, and what comes out is golden. We run your business the same way: repairs done right the first time, processes that stop the rework, and websites and tools that keep getting better.</p>
+      <div class="ctas"><a class="btn" href="#pillars">Open the comb</a><a class="btn line" href="#contact">Start a project</a></div>
+    </div>
+    <div class="combart">
+      <svg viewBox="-170 -170 340 340" role="img" aria-label="Honeycomb filling with honey around the One Band Works logo">
+        <defs>
+          <linearGradient id="hg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f8cc5a"/><stop offset="1" stop-color="#c46f08"/></linearGradient>
+          <linearGradient id="wax" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6df"/><stop offset="1" stop-color="#f1dcae"/></linearGradient>
+        </defs>
+        <g id="combCells"></g>
+      </svg>
+    </div>
+  </div>
+</header>
+
+<section class="story" id="story">
+  <div class="wrap">
+    <div>
+      <span class="eyebrow">Chamber 1 · The hive</span>
+      <h2>Why we build like <em>bees.</em></h2>
+      <p>A hive works because nobody is guessing. The foragers, the builders, and the keepers each know their part, and together they turn something raw into something sweet. One Band Works is built on that idea: one band of skills, pulling the same direction.</p>
+      <p>The founder comes from electronics, the field, and the production floor: years repairing equipment, managing big service accounts, and running a production team where speed and quality both had to hold. Now that discipline goes to work for your business.</p>
+    </div>
+    <div class="facts">
+      <div class="fact"><div class="hx">01</div><div><b>Every step intentional</b><span>We map the real work before we touch it, so nothing gets done twice.</span></div></div>
+      <div class="fact"><div class="hx">02</div><div><b>Built to keep improving</b><span>Systems that get better over time, not one-off fixes that fade.</span></div></div>
+      <div class="fact"><div class="hx">03</div><div><b>Hands and mind</b><span>A field-proven tech who also builds websites, apps, and brands.</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="pillars" id="pillars">
+  <div class="wrap">
+    <span class="eyebrow">Chamber 2 · The comb</span>
+    <h2>Four cells. <em>Twenty ways to help.</em></h2>
+    <p class="intro">Open a cell to see what's inside. Tick anything you want and it goes straight into your note at the bottom.</p>
+    <div class="cells" id="cells"></div>
+  </div>
+</section>
+
+<section id="process">
+  <div class="wrap">
+    <span class="eyebrow">Chamber 3 · How the honey gets made</span>
+    <h2>O.N.E. flow, <em>one band.</em></h2>
+    <p class="intro">Every job moves through the same three stages, held together by the four things we promise.</p>
+    <div class="steps" id="steps">
+      <span class="flow" id="flow"></span>
+      <div class="step"><span class="dot">O</span><span class="tag">Stage one</span><h3>Organize</h3><p>We walk the work, time it, and line it up with your demand and your goal, so the plan fits the real day.</p></div>
+      <div class="step"><span class="dot">N</span><span class="tag">Stage two</span><h3>Nurture</h3><p>We look after everyone and everything in the work: customers, employees, products, and processes.</p></div>
+      <div class="step"><span class="dot">E</span><span class="tag">Stage three</span><h3>Expand</h3><p>Once it flows, we grow it, and set it up to keep getting better without us standing over it.</p></div>
+      <div class="step"><span class="dot">B</span><span class="tag">The band</span><h3>Build · Align · Nurture · Develop</h3><p>We build whatever you need. We align time with the process and the demand. We nurture every participant. We develop quality products, quality processes, and quality relationships.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="pillars" id="packages">
+  <div class="wrap">
+    <span class="eyebrow">Chamber 4 · Ready jars</span>
+    <h2>Packages, <em>pre-poured.</em></h2>
+    <div class="packs">
+      <div class="pack"><span class="pr">$2,000 to $3,000</span><h3>Launch Package</h3><p>For a business that needs to look ready on day one.</p><ul><li>Brand core</li><li>Logo and icon kit</li><li>3-page website</li></ul></div>
+      <div class="pack alt"><span class="pr">$1,500 to $2,500</span><h3>Smooth Shop Package</h3><p>For a running business that wants less rework and fewer breakdowns.</p><ul><li>Process checkup</li><li>Custom rework tracker</li><li>3 months of maintenance</li></ul></div>
+    </div>
+    <p class="terms">50% deposit to start, balance on delivery. Two rounds of revisions on creative work. Travel included within 25 miles of Jonesboro, GA.</p>
+  </div>
+</section>
+
+<section class="contact" id="contact">
+  <div class="wrap">
+    <span class="eyebrow">Chamber 5 · Taste test</span>
+    <h2>Let's make <em>something sweet.</em></h2>
+    <div class="jar">
+      <div>
+        <p class="intro" style="margin-bottom:18px">Pick what you're curious about, add a line about your business, then copy the note and send it our way.</p>
+        <div class="mail" id="mail"></div>
+        <div class="ctas" style="margin-top:16px"><button class="btn honey" id="copyMail">Copy email</button></div>
+      </div>
+      <div>
+        <label class="f">I'm interested in</label>
+        <div class="pills" id="pills"></div>
+        <label class="f" for="nm">Your name</label>
+        <input type="text" id="nm" autocomplete="name">
+        <label class="f" for="note">Your note</label>
+        <textarea id="note"></textarea>
+        <button class="btn" id="copyNote">Copy note</button>
+        <div class="toast" id="toast" role="status"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer><div class="wrap"><span>© One Band Works LLC</span><span>Systems that flow to grow.</span></div></footer>
+
+<script src="data.js"></script>
+<script>
+(function () {
+  var D = window.OBW, C = D.cats;
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  var ICON = {
+    people: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><circle cx="5.5" cy="9.5" r="2.3"/><circle cx="18.5" cy="9.5" r="2.3"/><path d="M6 20c0-3.6 2.7-6 6-6s6 2.4 6 6M1.5 19c0-2.6 1.6-4.5 4-4.8M22.5 19c0-2.6-1.6-4.5-4-4.8"/></svg>',
+    systems: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>',
+    tech: '<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1.5"/><rect x="9.5" y="9.5" width="5" height="5"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>',
+    opp: '<svg viewBox="0 0 24 24"><path d="M3 21h18M5 21v-5M10 21v-8M15 21v-6M20 21V9M4 13l6-5 4 3 7-7M16 4h5v5"/></svg>'
+  };
+  var TAG = { people: 'Empower individuals & teams', systems: 'Build streamlined processes', tech: 'Innovative tools for real growth', opp: 'Create sustainable impact' };
+  var picked = [], interests = [];
+
+  /* hero comb: 7 cells, honey rises in each */
+  var g = document.getElementById('combCells'), r = 62, w = Math.sqrt(3) * r;
+  var pos = [[0, 0], [-w, 0], [w, 0], [-w / 2, -1.5 * r], [w / 2, -1.5 * r], [-w / 2, 1.5 * r], [w / 2, 1.5 * r]];
+  var labels = ['', 'People', 'Technology', 'Systems', 'Opportunity', 'Flow', 'Grow'];
+  function hexPts(cx, cy, rr) { var p = []; for (var k = 0; k < 6; k++) { var a = Math.PI / 180 * (60 * k - 90); p.push((cx + rr * Math.cos(a)).toFixed(1) + ',' + (cy + rr * Math.sin(a)).toFixed(1)); } return p.join(' '); }
+  var svgNS = 'http://www.w3.org/2000/svg', waves = [];
+  pos.forEach(function (p, i) {
+    var id = 'c' + i;
+    var cp = document.createElementNS(svgNS, 'clipPath'); cp.id = id; var pg = document.createElementNS(svgNS, 'polygon'); pg.setAttribute('points', hexPts(p[0], p[1], r - 5)); cp.appendChild(pg); g.appendChild(cp);
+    var base = document.createElementNS(svgNS, 'polygon'); base.setAttribute('points', hexPts(p[0], p[1], r - 2)); base.setAttribute('fill', 'url(#wax)'); base.setAttribute('stroke', '#c98a1c'); base.setAttribute('stroke-width', '4'); g.appendChild(base);
+    var wv = document.createElementNS(svgNS, 'path'); wv.setAttribute('fill', 'url(#hg)'); wv.setAttribute('clip-path', 'url(#' + id + ')'); g.appendChild(wv);
+    waves.push({ el: wv, x: p[0], y: p[1], level: 0, target: i === 0 ? .55 : .25 + Math.random() * .5, ph: Math.random() * 6 });
+    if (i === 0) {
+      var im = document.createElementNS(svgNS, 'image'); im.setAttribute('href', 'icon.png'); im.setAttribute('x', p[0] - 42); im.setAttribute('y', p[1] - 42); im.setAttribute('width', 84); im.setAttribute('height', 84); g.appendChild(im);
+    } else {
+      var t = document.createElementNS(svgNS, 'text'); t.setAttribute('x', p[0]); t.setAttribute('y', p[1] - 6); t.setAttribute('text-anchor', 'middle'); t.setAttribute('font-family', 'Fraunces, Georgia, serif'); t.setAttribute('font-weight', '800'); t.setAttribute('font-size', labels[i].length > 8 ? '14' : '17'); t.setAttribute('fill', '#3b1f02'); t.textContent = labels[i]; g.appendChild(t);
+    }
+  });
+  function drawWaves(time) {
+    waves.forEach(function (wv) {
+      wv.level += (wv.target - wv.level) * .02;
+      var top = wv.y + r - wv.level * 2 * r, d = 'M' + (wv.x - r) + ' ' + (wv.y + r + 4);
+      for (var x = -r; x <= r; x += 6) d += ' L' + (wv.x + x) + ' ' + (top + Math.sin(x / 14 + time / 700 + wv.ph) * 4).toFixed(1);
+      d += ' L' + (wv.x + r) + ' ' + (wv.y + r + 4) + 'Z';
+      wv.el.setAttribute('d', d);
+    });
+  }
+  if (reduce) { waves.forEach(function (w) { w.level = w.target; }); drawWaves(0); }
+  else (function loop(t) { drawWaves(t || 0); requestAnimationFrame(loop); })();
+  g.addEventListener('mousemove', function () { waves.forEach(function (w) { w.target = Math.min(.9, w.target + .01); }); });
+
+  /* pillar cells */
+  var cells = document.getElementById('cells');
+  D.order.forEach(function (k, ci) {
+    var c = C[k];
+    var items = c.items.map(function (it, i) { return '<li><b>' + esc(it.n) + '</b><i>' + esc(it.p) + '</i><span>' + esc(it.d) + '</span><label><input type="checkbox" data-key="' + k + ':' + i + '"> Add to my note</label></li>'; }).join('');
+    cells.insertAdjacentHTML('beforeend', '<div class="cell' + (ci === 0 ? ' open' : '') + '"><button aria-expanded="' + (ci === 0) + '" aria-controls="list-' + k + '"><span class="hx">' + ICON[k] + '</span><span><h3>' + esc(c.name) + '</h3><span class="tl">' + TAG[k] + ' · ' + c.items.length + ' services</span></span><span class="plus" aria-hidden="true">+</span></button><div class="list" id="list-' + k + '"><div><ul>' + items + '</ul></div></div></div>');
+  });
+  cells.addEventListener('click', function (e) {
+    var b = e.target.closest('.cell > button'); if (!b) return;
+    var cell = b.parentNode, open = !cell.classList.contains('open');
+    cell.classList.toggle('open', open); b.setAttribute('aria-expanded', open);
+  });
+  cells.addEventListener('change', function (e) {
+    var cb = e.target; if (!cb.dataset.key) return;
+    var i = picked.indexOf(cb.dataset.key);
+    if (cb.checked && i < 0) picked.push(cb.dataset.key); if (!cb.checked && i > -1) picked.splice(i, 1);
+    writeNote();
+  });
+
+  /* contact */
+  document.getElementById('mail').textContent = D.email;
+  var pills = document.getElementById('pills');
+  D.order.forEach(function (k) { pills.insertAdjacentHTML('beforeend', '<button class="pill" aria-pressed="false" data-k="' + k + '">' + C[k].name + '</button>'); });
+  pills.addEventListener('click', function (e) {
+    var p = e.target.closest('.pill'); if (!p) return;
+    var on = p.getAttribute('aria-pressed') !== 'true'; p.setAttribute('aria-pressed', on);
+    var i = interests.indexOf(p.dataset.k); if (on && i < 0) interests.push(p.dataset.k); if (!on && i > -1) interests.splice(i, 1);
+    writeNote();
+  });
+  var note = document.getElementById('note'), nm = document.getElementById('nm'), edited = false;
+  note.addEventListener('input', function () { edited = true; });
+  nm.addEventListener('input', function () { if (!edited) writeNote(); });
+  function writeNote() {
+    if (edited) return;
+    var lines = picked.map(function (k) { var a = k.split(':'), it = C[a[0]].items[+a[1]]; return '• ' + it.n + ' (' + it.p + ')'; });
+    var ints = interests.map(function (k) { return C[k].name; }).join(', ');
+    note.value = 'Hi One Band Works,\n\n' + (ints ? 'I\'m interested in ' + ints + '.\n' : '') + (lines.length ? 'Services I picked:\n' + lines.join('\n') + '\n' : '') + '\nA little about my business: \n\n' + (nm.value ? 'Thanks,\n' + nm.value : 'Thanks!');
+  }
+  writeNote();
+  function copy(text, msg) {
+    var t = document.getElementById('toast');
+    function fb() { var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); t.textContent = msg; } catch (e) { t.textContent = 'Select and copy it by hand'; } ta.remove(); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { t.textContent = msg; }, fb); else fb();
+  }
+  document.getElementById('copyNote').onclick = function () { copy(note.value, 'Note copied. Paste it into an email to ' + D.email); };
+  document.getElementById('copyMail').onclick = function () { copy(D.email, 'Email copied'); };
+
+  /* honey meter + process flow fill with scroll */
+  var meterLinks = [].slice.call(document.querySelectorAll('#meter a'));
+  var secs = meterLinks.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+  var steps = document.getElementById('steps'), flow = document.getElementById('flow');
+  function onScroll() {
+    var vh = innerHeight;
+    secs.forEach(function (s, i) {
+      var r = s.getBoundingClientRect(), f = Math.max(0, Math.min(1, (vh * .6 - r.top) / Math.max(1, r.height)));
+      meterLinks[i].style.setProperty('--f', (f * 100).toFixed(0) + '%');
+    });
+    var sr = steps.getBoundingClientRect(), fh = Math.max(0, Math.min(1, (vh * .7 - sr.top) / sr.height));
+    flow.style.setProperty('--fh', (fh * 100).toFixed(0) + '%');
+  }
+  addEventListener('scroll', onScroll, { passive: true }); onScroll();
+})();
+</script>
+
+</body>
+</html>
